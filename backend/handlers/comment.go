@@ -7,33 +7,31 @@ import (
 	"forum/database"
 	"forum/middleware"
 	"forum/models"
+	"forum/utils"
 )
 
 func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.RenderErrorPage(w, http.StatusMethodNotAllowed)
 		return
 	}
 	// Get user ID from context
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		errorMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	var comment models.Comment
-	err := json.NewDecoder(r.Body).Decode(&comment)
-	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := ParseJSONBody(r.Body, &comment); err != nil {
+		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	// Override the user_id with the authenticated user's ID
 	comment.UserID = userID
-
-	err = database.CreateComment(comment)
-	if err != nil {
-		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
+	if err := database.CreateComment(comment); err != nil {
+		errorMessage(w, "Failed to create comment", http.StatusInternalServerError)
 		return
 	}
 
@@ -51,14 +49,10 @@ func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	var like models.LikeDislike
 
-	var like struct {
-		CommentID int  `json:"comment_id"`
-		IsLike    bool `json:"is_like"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&like); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := ParseJSONBody(r.Body, &like); err != nil {
+		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
