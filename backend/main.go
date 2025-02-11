@@ -3,18 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
-	"path/filepath"
 
 	"forum/database"
 	"forum/handlers"
 	"forum/middleware"
-	"forum/utils"
 )
-
-func serveTemplate(w http.ResponseWriter, r *http.Request, templatePath string) {
-	path := filepath.Join("../frontend/templates", templatePath)
-	http.ServeFile(w, r, path)
-}
 
 func main() {
 	err := database.InitDB("./forum.db")
@@ -22,21 +15,9 @@ func main() {
 		log.Fatalf("Database initialization failed: %v. Ensure the file exists and is accessible.", err)
 	}
 
-	staticPath, err := filepath.Abs("../frontend/static")
-	if err != nil {
-		log.Fatalf("Failed to get absolute path for static files: %v", err)
-	}
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))))
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			serveTemplate(w, r, "index.html")
-			return
-		}
-		utils.RenderErrorPage(w, http.StatusNotFound)
-	})
-
 	// API routes - Public
+	http.HandleFunc("/static/", handlers.Static)
+	http.HandleFunc("/", handlers.Index)
 	http.HandleFunc("/api/login", handlers.LoginHandler)
 	http.HandleFunc("/api/register", handlers.RegisterHandler)
 	http.HandleFunc("/api/posts", handlers.GetPostsHandler)
