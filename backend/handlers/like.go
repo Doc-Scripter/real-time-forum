@@ -26,7 +26,7 @@ func CreatePostLikeDislikeHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the user ID from the authenticated user
 	like.UserID = userID
 	if err := database.CreateLikeDislike(like); err != nil {
-		http.Error(w, "Failed to like/dislike", http.StatusInternalServerError)
+		errorMessage(w, "Failed to like/dislike", http.StatusInternalServerError)
 		return
 	}
 
