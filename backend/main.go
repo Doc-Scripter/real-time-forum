@@ -31,7 +31,7 @@ func main() {
 	protectedMux.HandleFunc("/api/posts", handlers.GetPostsHandler)
 	protectedMux.HandleFunc("/api/posts/create", handlers.CreatePostHandler)
 	protectedMux.HandleFunc("/api/comments", handlers.CreateCommentHandler)
-	protectedMux.HandleFunc("/api/likes", handlers.CreateLikeDislikeHandler)
+	protectedMux.HandleFunc("/api/likes", handlers.CreatePostLikeDislikeHandler)
 	protectedMux.HandleFunc("/api/auth/status", handlers.AuthStatusHandler)
 	protectedMux.HandleFunc("/api/comments/like", handlers.CreateCommentLikeHandler)
 
