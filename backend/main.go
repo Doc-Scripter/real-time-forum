@@ -9,35 +9,12 @@ import (
 	"forum/middleware"
 )
 
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-		if origin != "" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-		} else {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-		}
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 func main() {
 	err := database.InitDB("./forum.db")
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v. Ensure the file exists and is accessible.", err)
 	}
 
-	
-	
 	// API routes - Public
 	http.HandleFunc("/static/", handlers.Static)
 	http.HandleFunc("/", handlers.Index)
@@ -62,7 +39,7 @@ func main() {
 	http.Handle("/api/protected/", middleware.AuthMiddleware(http.StripPrefix("/api/protected", protectedMux)))
 
 	// Applying CORS middleware to all API routes
-	http.Handle("/api/", corsMiddleware(http.DefaultServeMux))
+	http.Handle("/api/", middleware.CorsMiddleware(http.DefaultServeMux))
 
 	// Start server
 	log.Println("Server started on http://localhost:9111")
