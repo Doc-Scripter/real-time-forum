@@ -22,7 +22,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var postData models.Post
 	postData.UserID = userId
-	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
+	if err := ParseJSONBody(r.Body, &postData); err != nil {
 		errorMessage(w, "Cannot get decode post body", http.StatusInternalServerError)
 		return
 	}
