@@ -334,17 +334,20 @@ function setupInfiniteScroll() {
     loadMoreTrigger.id = 'load-more-trigger';
     loadMoreTrigger.innerHTML = `
         <div class="loading-spinner" style="display: none;"></div>
-        <button class="load-more-btn" onclick="loadMorePosts()">Load More</button>
+        <p class="no-more-posts" style="display: none;">No more posts to load</p>
     `;
     document.getElementById('posts-list').appendChild(loadMoreTrigger);
+
+    updateNoMorePostsVisibility();
 
     // Set up intersection observer for infinite scroll
     const observer = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMorePosts && !isLoading) {
             loadMorePosts();
+        } else if (entries[0].isIntersecting && !hasMorePosts) {
+            updateNoMorePostsVisibility();
         }
     }, { threshold: 0.1 });
-
     observer.observe(loadMoreTrigger);
 }
 
@@ -353,19 +356,27 @@ async function loadMorePosts() {
     
     const trigger = document.getElementById('load-more-trigger');
     const spinner = trigger.querySelector('.loading-spinner');
-    const button = trigger.querySelector('.load-more-btn');
     
     spinner.style.display = 'inline-block';
-    button.style.display = 'none';
     
     currentPage++;
     await fetchPosts(true);
     
     spinner.style.display = 'none';
-    button.style.display = hasMorePosts ? 'inline-block' : 'none';
     
+    updateNoMorePostsVisibility();
+}
+
+// updates the visibility of the "no more posts" message
+function updateNoMorePostsVisibility() {
+    const trigger = document.getElementById('load-more-trigger');
+    if (!trigger) return;
+
+    const noMorePosts = trigger.querySelector('.no-more-posts');
     if (!hasMorePosts) {
-        trigger.innerHTML = '<p>No more posts to load</p>';
+        noMorePosts.style.display = 'block';
+    } else {
+        noMorePosts.style.display = 'none';
     }
 }
 

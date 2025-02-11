@@ -3,10 +3,10 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Forum</title>
+	<title>Forum - Share your ideas</title>
 	<link rel="stylesheet" href="/static/styles.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico"></head>
 <body>
 	<header>
 		<nav>
@@ -110,15 +110,6 @@
 				<h3 id="modalTitle">Login</h3>
 				<button onclick="closeAuthModal()" class="modal-close">&times;</button>
 			</div>
-			<div id="password-requirements" class="password-requirements" style="display: none;">
-				<h4>Password Requirements:</h4>
-				<ul>
-					<li id="length-check"><i class="fas fa-circle"></i> At least 8 characters</li>
-					<li id="number-check"><i class="fas fa-circle"></i> At least 1 number</li>
-					<li id="special-check"><i class="fas fa-circle"></i> At least 1 special character</li>
-					<li id="uppercase-check"><i class="fas fa-circle"></i> At least 1 uppercase letter</li>
-				</ul>
-			</div>
 			<div id="authMessage" class="auth-message" style="display: none;"></div>
 			<div class="modal-body">
 				<form id="authForm" onsubmit="handleAuth(event)">
@@ -142,6 +133,15 @@
 					</div>
 
 				</form>
+			</div>
+			<div id="password-requirements" class="password-requirements" style="display: none;">
+				<h4>Password Requirements:</h4>
+				<ul>
+					<li id="length-check"><i class="fas fa-circle"></i> At least 8 characters</li>
+					<li id="number-check"><i class="fas fa-circle"></i> At least 1 number</li>
+					<li id="special-check"><i class="fas fa-circle"></i> At least 1 special character</li>
+					<li id="uppercase-check"><i class="fas fa-circle"></i> At least 1 uppercase letter</li>
+				</ul>
 			</div>
 			<div class="modal-footer">
 				<button class="modal-submit" onclick="handleAuth(event)">Login</button>
