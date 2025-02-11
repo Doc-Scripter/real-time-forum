@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
 	"forum/models"
@@ -20,4 +21,9 @@ func errorMessage(w http.ResponseWriter, msg string, errorCode int) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": msg,
 	})
+}
+
+// Get JSON body content
+func ParseJSONBody(r io.Reader, model any) error {
+	return json.NewDecoder(r).Decode(model)
 }
