@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"forum/database"
+	"forum/database/query"
 	"forum/middleware"
+	"forum/models"
 )
 
 func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -18,16 +19,16 @@ func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get username
-	var username string
-	err := database.DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
-	if err != nil {
+	var user models.User
+	user.ID = userID
+	if err := query.GetUserByID(user); err != nil {
 		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
 		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"authenticated": true,
-		"username":      username,
-		"user_id":       userID,
+		"username":      user.Username,
+		"user_id":       user.ID,
 	})
 }
