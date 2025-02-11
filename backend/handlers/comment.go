@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"forum/database"
+	"forum/database/query"
 	"forum/middleware"
 	"forum/models"
 	"forum/utils"
@@ -50,20 +51,14 @@ func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var like models.LikeDislike
+	like.UserID = userID
 
 	if err := ParseJSONBody(r.Body, &like); err != nil {
 		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Insert or update the comment like in the database
-	_, err := database.DB.Exec(`
-		INSERT INTO comment_likes (user_id, comment_id, is_like)
-		VALUES (?, ?, ?)
-		ON CONFLICT(user_id, comment_id)
-		DO UPDATE SET is_like = ?`,
-		userID, like.CommentID, like.IsLike, like.IsLike)
-	if err != nil {
+	if err := query.UpdateCommentLikes(like); err != nil {
 		http.Error(w, "Failed to update comment like", http.StatusInternalServerError)
 		return
 	}
