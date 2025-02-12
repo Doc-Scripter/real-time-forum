@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -47,6 +48,7 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Get page from query parameters
 	page := r.URL.Query().Get("page")
+	category := r.URL.Query().Get("category")
 	filter := r.URL.Query().Get("filter")
 
 	pageNum := 1
@@ -58,8 +60,8 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	offset := (pageNum - 1) * database.PostsPerPage
 	userID, _ := middleware.GetUserID(r)
-
-	posts, err := database.GetAllPosts(offset, filter, userID)
+	fmt.Println("GetPostsHandler: ", category, filter, offset, userID)
+	posts, err := database.GetAllPosts(offset, category, filter, userID)
 	if err != nil {
 		errorMessage(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return

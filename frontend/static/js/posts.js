@@ -1,9 +1,12 @@
 let currentPage = 1;
 let isLoading = false;
 let hasMorePosts = true;
+let currentCategory = '';
 let currentFilter = '';
+let fetchPostURL = '/api/posts';
 
 async function loadFilterCategories() {
+    fetchPostURL = '/api/posts';
     try {
         const response = await fetch('/api/categories');
         const categories = await response.json();
@@ -49,10 +52,7 @@ async function loadFilterCategories() {
                 this.classList.add("active");
                 
                 if (this.dataset.category === 'all') {
-                    currentFilter = ''; 
-                    currentPage = 1;
-                    hasMorePosts = true;
-                    fetchPosts(false);
+                    resetPosts();
                 } else {
                     applyCategoryFilter(this.dataset.category);
                 }
@@ -179,7 +179,7 @@ async function fetchPosts(append = false) {
     
     try {
         isLoading = true;
-        const response = await fetch(`/api/posts?page=${currentPage}&filter=${currentFilter}`);
+        const response = await fetch(`${fetchPostURL}?page=${currentPage}&category=${currentCategory}&filter=${currentFilter}`);
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to fetch posts');
@@ -384,6 +384,7 @@ function updateNoMorePostsVisibility() {
 function resetPosts() {
     currentPage = 1;
     currentFilter = '';
+    currentCategory = '';
     hasMorePosts = true;
     fetchPosts(false);
 }
@@ -399,8 +400,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // Update other functions that fetch posts to use resetPosts()
 function applyFilters(filter) {
     currentFilter = filter || '';
+    currentCategory = '';
     currentPage = 1;
     hasMorePosts = true;
+    fetchPostURL = 'api/protected/api/posts';
     fetchPosts(false);
 }
 
@@ -477,11 +480,13 @@ async function updatePost(postId) {
 
 // Add this function to handle category filtering
 function applyCategoryFilter(categoryId) {
-    if (categoryId === '') {
-        currentFilter = '';
-    } else {
-        currentFilter = `category-${categoryId}`;
-    }
+    currentCategory = categoryId === '' ? '' : `category-${categoryId}`;
+    // if (categoryId === '') {
+    //     currentCategory = '';
+    // } else {
+    //     currentCategory = `category-${categoryId}`;
+    // }
+    currentFilter = '';
     currentPage = 1;
     hasMorePosts = true;
     fetchPosts(false);
