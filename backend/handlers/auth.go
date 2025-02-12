@@ -21,7 +21,7 @@ func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
 	// Get username
 	var user models.User
 	user.ID = userID
-	if err := query.GetUserByID(user); err != nil {
+	if err := query.GetUserByID(&user); err != nil {
 		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
 		return
 	}
