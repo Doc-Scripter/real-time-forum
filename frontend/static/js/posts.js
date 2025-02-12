@@ -6,7 +6,6 @@ let currentFilter = '';
 let fetchPostURL = '/api/posts';
 
 async function loadFilterCategories() {
-    fetchPostURL = '/api/posts';
     try {
         const response = await fetch('/api/categories');
         const categories = await response.json();
@@ -66,22 +65,22 @@ async function loadFilterCategories() {
     }
 }
 
-async function loadPostCategories() {
-    try {
-        const response = await fetch('/api/categories');
-        const categories = await response.json();
-        const container = document.getElementById('postCategories');
+// async function loadPostCategories() {
+//     try {
+//         const response = await fetch('/api/categories');
+//         const categories = await response.json();
+//         const container = document.getElementById('postCategories');
         
-        container.innerHTML = categories.map(category => `
-            <label class="category-checkbox">
-                <input type="checkbox" value="${category.id}">
-                <span>${category.name}</span>
-            </label>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading categories:', error);
-    }
-}
+//         container.innerHTML = categories.map(category => `
+//             <label class="category-checkbox">
+//                 <input type="checkbox" value="${category.id}">
+//                 <span>${category.name}</span>
+//             </label>
+//         `).join('');
+//     } catch (error) {
+//         console.error('Error loading categories:', error);
+//     }
+// }
 
 async function openCreatePostModal() {
     try {
@@ -211,6 +210,10 @@ async function fetchPosts(append = false) {
         setupInfiniteScroll();
 
     } catch (error) {
+        if (currentFilter) {
+            handleError('Please login to view your posts');
+            return;
+        }
         console.error('Error fetching posts:', error);    
         handleError('Error loading posts: ' + error.message);
     } finally {
@@ -481,13 +484,9 @@ async function updatePost(postId) {
 // Add this function to handle category filtering
 function applyCategoryFilter(categoryId) {
     currentCategory = categoryId === '' ? '' : `category-${categoryId}`;
-    // if (categoryId === '') {
-    //     currentCategory = '';
-    // } else {
-    //     currentCategory = `category-${categoryId}`;
-    // }
     currentFilter = '';
     currentPage = 1;
     hasMorePosts = true;
+    fetchPostURL = 'api/posts';
     fetchPosts(false);
 }
