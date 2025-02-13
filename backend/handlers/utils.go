@@ -17,13 +17,6 @@ func ValidatePost(p models.Post) error {
 	return nil
 }
 
-func errorMessage(w http.ResponseWriter, msg string, errorCode int) {
-	w.WriteHeader(errorCode)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": msg,
-	})
-}
-
 // Get JSON body content
 func ParseJSONBody(r io.Reader, model any) error {
 	return json.NewDecoder(r).Decode(model)

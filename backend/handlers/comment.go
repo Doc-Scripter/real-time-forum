@@ -14,19 +14,19 @@ import (
 
 func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.RenderErrorPage(w, http.StatusMethodNotAllowed)
+		utils.ErrorMessage(w, "Hey! Method not allowed...", http.StatusMethodNotAllowed)
 		return
 	}
 
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
-		errorMessage(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorMessage(w, "Please login to continue...", http.StatusUnauthorized)
 		return
 	}
 
 	var comment models.Comment
 	if err := ParseJSONBody(r.Body, &comment); err != nil {
-		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
+		utils.ErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
@@ -41,7 +41,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	comment.UserID = userID
 	if err := database.CreateComment(comment); err != nil {
-		errorMessage(w, "Failed to create comment", http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Opps! Failed to create comment", http.StatusInternalServerError)
 		return
 	}
 
@@ -51,24 +51,24 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.RenderErrorPage(w, http.StatusMethodNotAllowed)
 		return
 	}
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorMessage(w, "Please login to continue...", http.StatusUnauthorized)
 		return
 	}
 	var like models.LikeDislike
 	like.UserID = userID
 
 	if err := ParseJSONBody(r.Body, &like); err != nil {
-		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
+		utils.ErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if err := query.UpdateCommentLikes(like); err != nil {
-		http.Error(w, "Failed to update comment like", http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Sorry! We couldn't update your reaction. Try again.", http.StatusInternalServerError)
 		return
 	}
 

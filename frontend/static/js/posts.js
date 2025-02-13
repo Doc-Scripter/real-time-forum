@@ -28,7 +28,7 @@ async function loadFilterCategories() {
         container.innerHTML = `
             <button 
                 class="category-filter-btn active"
-                data-category="all">
+                data-category="">
                 <i class="fas fa-list"></i> All Posts
             </button>
         `;
@@ -210,10 +210,6 @@ async function fetchPosts(append = false) {
         setupInfiniteScroll();
 
     } catch (error) {
-        // if (currentFilter) {
-        //     handleError('Please login to view your posts');
-        //     return;
-        // }
         console.error('Error fetching posts:', error);    
         handleError(error.message);
     } finally {
@@ -262,10 +258,6 @@ async function handleCreatePost(event) {
     
     const title = document.getElementById('postTitle').value;
     const content = document.getElementById('postContent').value;
- 
-    // if (!validatePostForm(title, content)) {
-    //     return;
-    // }
     
     const selectedCategories = Array.from(document.querySelectorAll('#postCategories input:checked')).map(input => parseInt(input.value));
 

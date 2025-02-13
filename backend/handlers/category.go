@@ -5,12 +5,13 @@ import (
 	"net/http"
 
 	"forum/database"
+	"forum/utils"
 )
 
 func GetCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 	categories, err := database.GetCategories()
 	if err != nil {
-		http.Error(w, "Failed to fetch categories", http.StatusInternalServerError)
+		utils.RenderErrorPage(w, http.StatusInternalServerError)
 		return
 	}
 
