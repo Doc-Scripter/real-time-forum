@@ -7,26 +7,27 @@ import (
 	"forum/database"
 	"forum/middleware"
 	"forum/models"
+	"forum/utils"
 )
 
 func CreatePostLikeDislikeHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
-		errorMessage(w, "Unauthorized", http.StatusUnauthorized)
+		utils.ErrorMessage(w, "Please login to continue...", http.StatusUnauthorized)
 		return
 	}
 
 	var like models.LikeDislike
 
 	if err := ParseJSONBody(r.Body, &like); err != nil {
-		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
+		utils.ErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	// Set the user ID from the authenticated user
 	like.UserID = userID
 	if err := database.CreateLikeDislike(like); err != nil {
-		errorMessage(w, "Failed to like/dislike", http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Opps... Failed to like/dislike", http.StatusInternalServerError)
 		return
 	}
 

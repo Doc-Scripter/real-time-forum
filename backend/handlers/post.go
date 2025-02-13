@@ -2,37 +2,37 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"forum/database"
 	"forum/middleware"
 	"forum/models"
+	"forum/utils"
 )
 
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.ErrorMessage(w, "Hey! Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	userId, ok := middleware.GetUserID(r)
 	if !ok {
-		errorMessage(w, "Unauthorized: No user ID", http.StatusUnauthorized)
+		utils.ErrorMessage(w, "Unauthorized: No user ID", http.StatusUnauthorized)
 		return
 	}
 	var postData models.Post
 	postData.UserID = userId
 	if err := ParseJSONBody(r.Body, &postData); err != nil {
-		errorMessage(w, "Cannot get decode post body", http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Sorry! We didnt get those post details. Try again.", http.StatusInternalServerError)
 		return
 	}
 	if err := ValidatePost(postData); err != nil {
-		errorMessage(w, err.Error(), http.StatusBadRequest)
+		utils.ErrorMessage(w, "Title and content are required", http.StatusBadRequest)
 		return
 	}
 	if err := database.CreatePost(postData); err != nil {
-		errorMessage(w, "cannot create post", http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Ooops! We couldn't get your post. Try again...", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -43,7 +43,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		errorMessage(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.ErrorMessage(w, "Hey! Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	// Get page from query parameters
@@ -60,10 +60,9 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 	offset := (pageNum - 1) * database.PostsPerPage
 	userID, _ := middleware.GetUserID(r)
-	fmt.Println("GetPostsHandler: ", category, filter, offset, userID)
 	posts, err := database.GetAllPosts(offset, category, filter, userID)
 	if err != nil {
-		errorMessage(w, "Failed to fetch posts", http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
 	}
 
@@ -73,19 +72,19 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetSinglePostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		errorMessage(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.ErrorMessage(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	postID := r.URL.Path[len("/api/posts/"):]
 	id, err := strconv.Atoi(postID)
 	if err != nil {
-		errorMessage(w, "Invalid post ID", http.StatusBadRequest)
+		utils.ErrorMessage(w, "Invalid post ID", http.StatusBadRequest)
 		return
 	}
 
 	post, err := database.GetPostByID(id)
 	if err != nil {
-		errorMessage(w, "Failed to fetch post", http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Failed to fetch post", http.StatusInternalServerError)
 		return
 	}
 

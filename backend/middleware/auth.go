@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -23,7 +22,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// Get the session token from the cookie
 		cookie, err := r.Cookie("session_token")
 		if err != nil {
-			utils.RenderErrorPage(w, http.StatusUnauthorized)
+			utils.ErrorMessage(w, "Please login to continue...", http.StatusUnauthorized)
 			return
 		}
 
@@ -36,13 +35,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		).Scan(&userID, &expiresAt)
 
 		if err == sql.ErrNoRows {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Unauthorized: Invalid session"})
+			utils.ErrorMessage(w, "Please login to continue...", http.StatusUnauthorized)
 			return
 		}
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Internal server error"})
+			utils.ErrorMessage(w, "Ooops! Please login to continue...", http.StatusInternalServerError)
 			return
 		}
 
@@ -50,8 +47,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if time.Now().After(expiresAt) {
 			// Delete expired session
 			database.DB.Exec("DELETE FROM sessions WHERE token = ?", cookie.Value)
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Unauthorized: Session expired"})
+			utils.ErrorMessage(w, "Please login to continue...", http.StatusUnauthorized)
 			return
 		}
 
