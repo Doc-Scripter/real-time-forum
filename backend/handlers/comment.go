@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"html"
 	"net/http"
 
 	"forum/database"
@@ -16,7 +17,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorMessage(w, "Hey! Method not allowed...", http.StatusMethodNotAllowed)
 		return
 	}
-	// Get user ID from context
+
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
 		utils.ErrorMessage(w, "Please login to continue...", http.StatusUnauthorized)
@@ -29,7 +30,15 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Override the user_id with the authenticated user's ID
+	// **Escape the comment content to neutralize scripts**
+	comment.Content = html.EscapeString(comment.Content)
+
+	// **Reject comments that are empty after escaping**
+	if comment.Content == "" {
+		errorMessage(w, "Comment cannot be empty", http.StatusBadRequest)
+		return
+	}
+
 	comment.UserID = userID
 	if err := database.CreateComment(comment); err != nil {
 		utils.ErrorMessage(w, "Opps! Failed to create comment", http.StatusInternalServerError)

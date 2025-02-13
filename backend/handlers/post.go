@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"html"
 	"net/http"
 	"strconv"
 
@@ -16,25 +18,34 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorMessage(w, "Hey! Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
 	userId, ok := middleware.GetUserID(r)
 	if !ok {
 		utils.ErrorMessage(w, "Unauthorized: No user ID", http.StatusUnauthorized)
 		return
 	}
+
 	var postData models.Post
 	postData.UserID = userId
+
 	if err := ParseJSONBody(r.Body, &postData); err != nil {
 		utils.ErrorMessage(w, "Sorry! We didnt get those post details. Try again.", http.StatusInternalServerError)
 		return
 	}
+
+	postData.Title = html.EscapeString(postData.Title)
+	postData.Content = html.EscapeString(postData.Content)
+
 	if err := ValidatePost(postData); err != nil {
 		utils.ErrorMessage(w, "Title and content are required", http.StatusBadRequest)
 		return
 	}
+
 	if err := database.CreatePost(postData); err != nil {
 		utils.ErrorMessage(w, "Ooops! We couldn't get your post. Try again...", http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Post created successfully",
