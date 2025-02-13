@@ -29,7 +29,7 @@ async function loadFilterCategories() {
             <button 
                 class="category-filter-btn active"
                 data-category="all">
-                <i class="fas fa-list"></i> All Categories
+                <i class="fas fa-list"></i> All Posts
             </button>
         `;
 
