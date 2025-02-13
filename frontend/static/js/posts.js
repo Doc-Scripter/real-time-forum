@@ -65,22 +65,22 @@ async function loadFilterCategories() {
     }
 }
 
-// async function loadPostCategories() {
-//     try {
-//         const response = await fetch('/api/categories');
-//         const categories = await response.json();
-//         const container = document.getElementById('postCategories');
+async function loadPostCategories() {
+    try {
+        const response = await fetch('/api/categories');
+        const categories = await response.json();
+        const container = document.getElementById('postCategories');
         
-//         container.innerHTML = categories.map(category => `
-//             <label class="category-checkbox">
-//                 <input type="checkbox" value="${category.id}">
-//                 <span>${category.name}</span>
-//             </label>
-//         `).join('');
-//     } catch (error) {
-//         console.error('Error loading categories:', error);
-//     }
-// }
+        container.innerHTML = categories.map(category => `
+            <label class="category-checkbox">
+                <input type="checkbox" value="${category.id}">
+                <span>${category.name}</span>
+            </label>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
 
 async function openCreatePostModal() {
     try {
@@ -210,12 +210,12 @@ async function fetchPosts(append = false) {
         setupInfiniteScroll();
 
     } catch (error) {
-        if (currentFilter) {
-            handleError('Please login to view your posts');
-            return;
-        }
+        // if (currentFilter) {
+        //     handleError('Please login to view your posts');
+        //     return;
+        // }
         console.error('Error fetching posts:', error);    
-        handleError('Error loading posts: ' + error.message);
+        handleError(error.message);
     } finally {
         isLoading = false;
     }
@@ -285,7 +285,7 @@ async function handleCreatePost(event) {
         closeCreatePostModal();
         resetPosts();
     } catch (e) {
-        if (e.message === 'title and content are required') {
+        if (e.message === 'Title and content are required') {
             showPostError('Title and content are required')
             return
         }
