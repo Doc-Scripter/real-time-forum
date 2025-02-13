@@ -16,17 +16,18 @@
 					Forum
 				</a>
 			</div>
-			<div class="nav-center">
+			<!-- TO DO: ADD A SEARCH BAR TO THE NAV BAR FOR QUICK FORUM CONTENT SEARCH -->
+			<!-- <div class="nav-center">
 				<div class="search-bar">
 					<i class="fas fa-search"></i>
 					<input type="text" placeholder="Search...">
 				</div>
-			</div>
+			</div> -->
 			<div class="nav-right">
-				<button class="search-btn">
+				<!-- <button class="search-btn">
 					<i class="fas fa-search"></i>
 					Search
-				</button>
+				</button> -->
 				<div id="auth-buttons">
 					<button onclick="openAuthModal('login')" class="auth-btn">Login</button>
 					<button onclick="openAuthModal('register')" class="auth-btn">Register</button>
@@ -45,9 +46,6 @@
 				<button onclick="applyFilters('liked-posts')" class="filter-btn">
 					<i class="fas fa-heart"></i> Liked Posts
 				</button>
-				<button onclick="applyFilters()" class="filter-btn">
-					<i class="fas fa-globe"></i> All Posts
-				</button>
 			</div>
 			<div class="categories-section">
 				<h3>Categories</h3>
@@ -61,13 +59,14 @@
 		<section class="main-content">
 			<div class="content-header">
 				<h2>Recent Posts</h2>
-				<div class="sort-options">
+				<!-- TO DO: ADD QUICK SORT OPTIONS FOR MOST LIKED AND MOST COMMENTED -->
+				<!-- <div class="sort-options">
 					<select onchange="sortPosts(this.value)">
 						<option value="popular">All Posts</option>
 						<option value="popular">Most Liked</option>
 						<option value="commented">Most Commented</option>
 					</select>
-				</div>
+				</div> -->
 			</div>
 			<div id="posts-list">
 				<!-- Posts -->
