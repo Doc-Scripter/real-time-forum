@@ -48,7 +48,7 @@ nav {
     margin: 0 auto;
     padding: 1rem 2rem;
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 2rem;
     align-items: center;
 }
@@ -647,7 +647,7 @@ main {
 
 @media (max-width: 768px) {
     nav {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 1rem;
         padding: 1rem;
     }
@@ -677,6 +677,20 @@ main {
     .post-actions {
         width: 100%;
         justify-content: space-between;
+    }
+}
+
+@media (max-width: 420px) {
+    nav {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    main {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        margin-top: 3rem;
     }
 }
 
