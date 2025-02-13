@@ -3,16 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"forum/database"
+
+	"forum/database/query"
 )
 
 func GetForumStatsHandler(w http.ResponseWriter, r *http.Request) {
-	stats, err := database.GetForumStats()
+	stats, err := query.GetForumStats()
 	if err != nil {
-		http.Error(w, "Failed to fetch forum stats", http.StatusInternalServerError)
+		errorMessage(w, "Failed to fetch forum stats", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
-} 
+}

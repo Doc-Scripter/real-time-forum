@@ -1,7 +1,9 @@
 let currentPage = 1;
 let isLoading = false;
 let hasMorePosts = true;
+let currentCategory = '';
 let currentFilter = '';
+let fetchPostURL = '/api/posts';
 
 async function loadFilterCategories() {
     try {
@@ -27,7 +29,7 @@ async function loadFilterCategories() {
             <button 
                 class="category-filter-btn active"
                 data-category="all">
-                <i class="fas fa-list"></i> All Categories
+                <i class="fas fa-list"></i> All Posts
             </button>
         `;
 
@@ -49,10 +51,7 @@ async function loadFilterCategories() {
                 this.classList.add("active");
                 
                 if (this.dataset.category === 'all') {
-                    currentFilter = ''; 
-                    currentPage = 1;
-                    hasMorePosts = true;
-                    fetchPosts(false);
+                    resetPosts();
                 } else {
                     applyCategoryFilter(this.dataset.category);
                 }
@@ -179,7 +178,7 @@ async function fetchPosts(append = false) {
     
     try {
         isLoading = true;
-        const response = await fetch(`/api/posts?page=${currentPage}&filter=${currentFilter}`);
+        const response = await fetch(`${fetchPostURL}?page=${currentPage}&category=${currentCategory}&filter=${currentFilter}`);
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to fetch posts');
@@ -211,8 +210,12 @@ async function fetchPosts(append = false) {
         setupInfiniteScroll();
 
     } catch (error) {
+        // if (currentFilter) {
+        //     handleError('Please login to view your posts');
+        //     return;
+        // }
         console.error('Error fetching posts:', error);    
-        handleError('Error loading posts: ' + error.message);
+        handleError(error.message);
     } finally {
         isLoading = false;
     }
@@ -282,7 +285,7 @@ async function handleCreatePost(event) {
         closeCreatePostModal();
         resetPosts();
     } catch (e) {
-        if (e.message === 'title and content are required') {
+        if (e.message === 'Title and content are required') {
             showPostError('Title and content are required')
             return
         }
@@ -384,6 +387,7 @@ function updateNoMorePostsVisibility() {
 function resetPosts() {
     currentPage = 1;
     currentFilter = '';
+    currentCategory = '';
     hasMorePosts = true;
     fetchPosts(false);
 }
@@ -399,8 +403,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // Update other functions that fetch posts to use resetPosts()
 function applyFilters(filter) {
     currentFilter = filter || '';
+    currentCategory = '';
     currentPage = 1;
     hasMorePosts = true;
+    fetchPostURL = 'api/protected/api/posts';
     fetchPosts(false);
 }
 
@@ -477,12 +483,10 @@ async function updatePost(postId) {
 
 // Add this function to handle category filtering
 function applyCategoryFilter(categoryId) {
-    if (categoryId === '') {
-        currentFilter = '';
-    } else {
-        currentFilter = `category-${categoryId}`;
-    }
+    currentCategory = categoryId === '' ? '' : `category-${categoryId}`;
+    currentFilter = '';
     currentPage = 1;
     hasMorePosts = true;
+    fetchPostURL = 'api/posts';
     fetchPosts(false);
 }

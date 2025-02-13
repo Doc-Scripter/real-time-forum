@@ -5,35 +5,34 @@ import (
 	"net/http"
 
 	"forum/database"
+	"forum/database/query"
 	"forum/middleware"
 	"forum/models"
+	"forum/utils"
 )
 
 func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.RenderErrorPage(w, http.StatusMethodNotAllowed)
 		return
 	}
 	// Get user ID from context
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		errorMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	var comment models.Comment
-	err := json.NewDecoder(r.Body).Decode(&comment)
-	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := ParseJSONBody(r.Body, &comment); err != nil {
+		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	// Override the user_id with the authenticated user's ID
 	comment.UserID = userID
-
-	err = database.CreateComment(comment)
-	if err != nil {
-		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
+	if err := database.CreateComment(comment); err != nil {
+		errorMessage(w, "Failed to create comment", http.StatusInternalServerError)
 		return
 	}
 
@@ -51,25 +50,15 @@ func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	var like models.LikeDislike
+	like.UserID = userID
 
-	var like struct {
-		CommentID int  `json:"comment_id"`
-		IsLike    bool `json:"is_like"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&like); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := ParseJSONBody(r.Body, &like); err != nil {
+		errorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Insert or update the comment like in the database
-	_, err := database.DB.Exec(`
-		INSERT INTO comment_likes (user_id, comment_id, is_like)
-		VALUES (?, ?, ?)
-		ON CONFLICT(user_id, comment_id)
-		DO UPDATE SET is_like = ?`,
-		userID, like.CommentID, like.IsLike, like.IsLike)
-	if err != nil {
+	if err := query.UpdateCommentLikes(like); err != nil {
 		http.Error(w, "Failed to update comment like", http.StatusInternalServerError)
 		return
 	}

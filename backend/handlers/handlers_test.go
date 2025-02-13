@@ -22,7 +22,7 @@ func TestRegisterHandler(t *testing.T) {
 		"email":    "test@example.com",
 		"password": "testpassword",
 	})
-	req := httptest.NewRequest(http.MethodGet, "/api/register", &buffer)
+	req := httptest.NewRequest(http.MethodPost, "/api/register", &buffer)
 	res.Code = http.StatusOK
 
 	RegisterHandler(res, req)
@@ -42,7 +42,7 @@ func TestLoginHandler(t *testing.T) {
 		"email":    "test@example.com",
 		"password": "testpassword",
 	})
-	req := httptest.NewRequest(http.MethodGet, "/api/login", &buffer)
+	req := httptest.NewRequest(http.MethodPost, "/api/login", &buffer)
 	res.Code = http.StatusOK
 
 	LoginHandler(res, req)
@@ -99,7 +99,7 @@ func TestGetPostsHandler(t *testing.T) {
 	// test response recorder
 	res := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/posts", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/posts", nil)
 
 	GetPostsHandler(res, req)
 	if res.Code != http.StatusOK {

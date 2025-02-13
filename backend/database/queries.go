@@ -53,13 +53,13 @@ func InsertPostCategories(postID int, categories []int) error {
 }
 
 // GetAllPosts with support for pagination
-func GetAllPosts(offset int, filter string, userID int) ([]models.Post, error) {
+func GetAllPosts(offset int, category, filter string, userID int) ([]models.Post, error) {
 	var query string
 	var args []interface{}
 
 	// Check if filter is a category filter
-	if len(filter) > 9 && filter[:9] == "category-" {
-		categoryID := filter[9:]
+	if len(category) > 9 && category[:9] == "category-" {
+		categoryID := category[9:]
 		query = `
 			SELECT DISTINCT
 				p.id, p.user_id, u.username, p.title, p.content, p.created_at,
