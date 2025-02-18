@@ -7,6 +7,7 @@ import (
 
 	"forum/database"
 	"forum/middleware"
+	"forum/queries"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -34,7 +35,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the user by email
-	user, err := database.GetUserByEmail(credentials.Email)
+	user, err := queries.GetUserByEmail(credentials.Email)
 	if err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
@@ -48,7 +49,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete any existing sessions for this user
-	err = database.DeleteUserSessions(user.ID)
+	err = queries.DeleteUserSessions(user.ID)
 	if err != nil {
 		http.Error(w, "Failed to manage sessions", http.StatusInternalServerError)
 		return
@@ -56,10 +57,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate a session token
 	sessionToken := uuid.New().String()
-	expiresAt := time.Now().Add(24 * time.Hour) 
+	expiresAt := time.Now().Add(24 * time.Hour)
 
 	// Store the session token in the database
-	_, err = database.DB.Exec("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)", 
+	_, err = database.DB.Exec("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
 		sessionToken, user.ID, expiresAt)
 	if err != nil {
 		http.Error(w, "Failed to create session", http.StatusInternalServerError)
@@ -72,8 +73,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    sessionToken,
 		Expires:  expiresAt,
 		Path:     "/",
-		HttpOnly: true, 
-		SameSite: http.SameSiteStrictMode,  
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 	})
 
 	w.WriteHeader(http.StatusOK)
@@ -96,7 +97,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete all sessions for this user
-	err := database.DeleteUserSessions(userID)
+	err := queries.DeleteUserSessions(userID)
 	if err != nil {
 		http.Error(w, "Failed to logout", http.StatusInternalServerError)
 		return
@@ -167,7 +168,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert user into database
-	_, err = database.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", 
+	_, err = database.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
 		user.Username, user.Email, string(hashedPassword))
 	if err != nil {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)

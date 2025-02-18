@@ -5,10 +5,9 @@ import (
 	"html"
 	"net/http"
 
-	"forum/database"
-	"forum/database/query"
 	"forum/middleware"
 	"forum/models"
+	"forum/queries"
 	"forum/utils"
 )
 
@@ -40,7 +39,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	comment.UserID = userID
-	if err := database.CreateComment(comment); err != nil {
+	if err := queries.CreateComment(comment); err != nil {
 		utils.ErrorMessage(w, "Opps! Failed to create comment", http.StatusInternalServerError)
 		return
 	}
@@ -67,7 +66,7 @@ func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := query.UpdateCommentLikes(like); err != nil {
+	if err := queries.UpdateCommentLikes(like); err != nil {
 		utils.ErrorMessage(w, "Sorry! We couldn't update your reaction. Try again.", http.StatusInternalServerError)
 		return
 	}

@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"forum/database"
+	"forum/queries"
 	"forum/utils"
 )
 
 func GetCategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	categories, err := database.GetCategories()
+	categories, err := queries.GetCategories()
 	if err != nil {
 		utils.RenderErrorPage(w, http.StatusInternalServerError)
 		return
