@@ -2,6 +2,7 @@
 
 # Build the Docker image
 echo "Building Docker image..."
+docker image prune -a 
 docker build -t forum .
 
 # Check if a docker instance is running
