@@ -13,7 +13,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.Path == "/" {
-		serveTemplate(w,r, "index.html")
+		serveTemplate(w, r, "index.html")
 		return
 	}
 	utils.RenderErrorPage(w, http.StatusNotFound)

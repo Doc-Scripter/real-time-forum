@@ -42,7 +42,7 @@ func RenderErrorPage(w http.ResponseWriter, status int) {
 }
 
 func ErrorMessage(w http.ResponseWriter, msg string, errorCode int) {
-    w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errorCode)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": msg,

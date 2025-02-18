@@ -29,7 +29,7 @@ func TestCreatePost(t *testing.T) {
 		post    models.Post
 		wantErr bool
 	}{
-		{name: "create post", post: models.Post{Title: "test title", Content: "test content", RawCategories: []int{1,2}}, wantErr: false},
+		{name: "create post", post: models.Post{Title: "test title", Content: "test content", RawCategories: []int{1, 2}}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -57,7 +57,6 @@ func TestGetCategories(t *testing.T) {
 		})
 	}
 }
-
 
 func TestGetAllPosts(t *testing.T) {
 	type args struct {

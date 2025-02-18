@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"forum/utils"
 	"forum/queries"
+	"forum/utils"
 )
 
 func GetForumStatsHandler(w http.ResponseWriter, r *http.Request) {
