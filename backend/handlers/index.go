@@ -12,7 +12,11 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		utils.RenderErrorPage(w, http.StatusMethodNotAllowed)
 		return
 	}
-	serveTemplate(w, r, "index.html")
+	if r.URL.Path == "/" {
+		serveTemplate(w,r, "index.html")
+		return
+	}
+	utils.RenderErrorPage(w, http.StatusNotFound)
 }
 
 func Static(w http.ResponseWriter, r *http.Request) {

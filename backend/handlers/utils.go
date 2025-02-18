@@ -5,9 +5,11 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"forum/models"
+	"forum/utils"
 )
 
 func ValidatePost(p models.Post) error {
@@ -25,5 +27,10 @@ func ParseJSONBody(r io.Reader, model any) error {
 // Render error page with a custom error message
 func serveTemplate(w http.ResponseWriter, r *http.Request, templatePath string) {
 	path := filepath.Join("../frontend/templates", templatePath)
+	_, err := os.Stat(path)
+	if err != nil {
+		utils.RenderErrorPage(w, http.StatusNotFound)
+		return
+	}
 	http.ServeFile(w, r, path)
 }

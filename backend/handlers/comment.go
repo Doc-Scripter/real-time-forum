@@ -35,7 +35,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// **Reject comments that are empty after escaping**
 	if comment.Content == "" {
-		errorMessage(w, "Comment cannot be empty", http.StatusBadRequest)
+		utils.ErrorMessage(w, "Comment cannot be empty", http.StatusBadRequest)
 		return
 	}
 
