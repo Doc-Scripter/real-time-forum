@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"forum/database/query"
 	"forum/middleware"
 	"forum/models"
+	"forum/queries"
 )
 
 func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +21,7 @@ func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
 	// Get username
 	var user models.User
 	user.ID = userID
-	if err := query.GetUserByID(&user); err != nil {
+	if err := queries.GetUserByID(&user); err != nil {
 		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
 		return
 	}

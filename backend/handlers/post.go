@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"forum/database"
 	"forum/middleware"
 	"forum/models"
+	"forum/queries"
 	"forum/utils"
 )
 
@@ -40,7 +40,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := database.CreatePost(postData); err != nil {
+	if err := queries.CreatePost(postData); err != nil {
 		utils.ErrorMessage(w, "Ooops! We couldn't get your post. Try again...", http.StatusInternalServerError)
 		return
 	}
@@ -68,9 +68,9 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	offset := (pageNum - 1) * database.PostsPerPage
+	offset := (pageNum - 1) * queries.PostsPerPage
 	userID, _ := middleware.GetUserID(r)
-	posts, err := database.GetAllPosts(offset, category, filter, userID)
+	posts, err := queries.GetAllPosts(offset, category, filter, userID)
 	if err != nil {
 		utils.ErrorMessage(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
@@ -92,7 +92,7 @@ func GetSinglePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := database.GetPostByID(id)
+	post, err := queries.GetPostByID(id)
 	if err != nil {
 		utils.ErrorMessage(w, "Failed to fetch post", http.StatusInternalServerError)
 		return

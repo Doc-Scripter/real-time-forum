@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"forum/database/query"
 	"forum/utils"
+	"forum/queries"
 )
 
 func GetForumStatsHandler(w http.ResponseWriter, r *http.Request) {
-	stats, err := query.GetForumStats()
+	stats, err := queries.GetForumStats()
 	if err != nil {
 		utils.ErrorMessage(w, "Ooops! Our post categories don't work! Try again later...", http.StatusInternalServerError)
 		return

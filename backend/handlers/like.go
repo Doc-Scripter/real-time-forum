@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"forum/database"
 	"forum/middleware"
 	"forum/models"
+	"forum/queries"
 	"forum/utils"
 )
 
@@ -26,7 +26,7 @@ func CreatePostLikeDislikeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the user ID from the authenticated user
 	like.UserID = userID
-	if err := database.CreateLikeDislike(like); err != nil {
+	if err := queries.CreateLikeDislike(like); err != nil {
 		utils.ErrorMessage(w, "Opps... Failed to like/dislike", http.StatusInternalServerError)
 		return
 	}
