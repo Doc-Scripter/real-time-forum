@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	err := database.InitDB("./forum.db")
+	err := database.InitDB("./database/forum.db")
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v. Ensure the file exists and is accessible.", err)
 	}
@@ -23,7 +23,7 @@ func main() {
 	http.HandleFunc("/api/posts", handlers.GetPostsHandler)
 	http.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
 	http.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
-	http.HandleFunc("/api/stats", handlers.GetForumStatsHandler)
+	http.HandleFunc("/api/status", handlers.GetForumStatusHandler)
 
 	// API routes - Protected
 	protectedMux := http.NewServeMux()
