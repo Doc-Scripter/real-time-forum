@@ -11,7 +11,7 @@ async function fetchAndDisplayOnlineUsers() {
             <h3>Users</h3>
             <div class="online-users-list">
                 ${users.map(user => `
-                    <div class="online-user">
+                    <div class="online-user" style="cursor:pointer;" onclick="openInboxWithUser('${user.username}')">
                         <span class="status-dot ${user.online ? 'online' : 'offline'}"></span>
                         <span class="username">${user.username}</span>
                     </div>
@@ -38,4 +38,4 @@ document.head.appendChild(styling);
 setInterval(fetchAndDisplayOnlineUsers, 30000);
 
 // Initial load
-document.addEventListener('DOMContentLoaded', fetchAndDisplayOnlineUsers); 
+document.addEventListener('DOMContentLoaded', fetchAndDisplayOnlineUsers);
