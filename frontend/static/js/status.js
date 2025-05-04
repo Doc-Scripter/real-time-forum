@@ -24,15 +24,15 @@ async function fetchAndDisplayOnlineUsers() {
 }
 
 // CSS for status dots (add to your CSS file or inject as needed)
-const style = document.createElement('style');
-style.innerHTML = `
+const styling = document.createElement('style');
+styling.innerHTML = `
 .online-users-list { display: flex; flex-direction: column; gap: 8px; }
 .online-user { display: flex; align-items: center; gap: 8px; }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .status-dot.online { background: #4caf50; }
 .status-dot.offline { background: #ccc; }
 `;
-document.head.appendChild(style);
+document.head.appendChild(styling);
 
 // Update online users every 30 seconds
 setInterval(fetchAndDisplayOnlineUsers, 30000);
