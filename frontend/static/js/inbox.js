@@ -40,8 +40,8 @@ if (inboxBtn && mainContent) {
 }
 
 // Add minimal CSS for WhatsApp-like style (should be moved to a CSS file)
-const style = document.createElement('style');
-style.innerHTML = `
+const style2 = document.createElement('style');
+style2.innerHTML = `
 .inbox-section { width: 100%; max-width: 500px; margin: 0 auto; background: #f0f0f0; border-radius: 8px; padding: 16px; }
 .messages-list { display: flex; flex-direction: column; gap: 12px; }
 .message-bubble { padding: 10px 14px; border-radius: 18px; max-width: 80%; }
@@ -51,4 +51,4 @@ style.innerHTML = `
 .message-text { margin: 4px 0; }
 .message-time { font-size: 0.75em; color: #999; text-align: right; }
 `;
-document.head.appendChild(style);
+document.head.appendChild(style2);
