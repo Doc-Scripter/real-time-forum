@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	err := database.InitDB("./database/forum.db")
+	err := database.InitDB("./database/data/forum.db")
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v. Ensure the file exists and is accessible.", err)
 	}
