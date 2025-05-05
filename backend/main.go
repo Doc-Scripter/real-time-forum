@@ -6,6 +6,7 @@ import (
 
 	"forum/database"
 	"forum/handlers"
+	"forum/middleware"
 )
 
 func main() {
@@ -23,6 +24,8 @@ func main() {
 	http.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
 	http.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
 	http.HandleFunc("/api/status", handlers.GetForumStatusHandler)
+	// Add to route definitions in main()
+http.HandleFunc("/ws", handlers.WebSocketHandler)
 
 	// API routes - Protected
 	protectedMux := http.NewServeMux()
@@ -35,10 +38,10 @@ func main() {
 	protectedMux.HandleFunc("/api/comments/like", handlers.CreateCommentLikeHandler)
 
 	// Registering routes
-	// http.Handle("/api/protected/", middleware.AuthMiddleware(http.StripPrefix("/api/protected", protectedMux)))
+	 http.Handle("/api/protected/", middleware.AuthMiddleware(http.StripPrefix("/api/protected", protectedMux)))
 
 	// Applying CORS middleware to all API routes
-	// http.Handle("/api/", middleware.CorsMiddleware(http.DefaultServeMux))
+	http.Handle("/api/", middleware.CorsMiddleware(http.DefaultServeMux))
 
 	// Start server
 	log.Println("Server started on http://localhost:9111")
