@@ -3,24 +3,29 @@ const inboxBtn = document.getElementById('inbox-btn');
 const mainContent = document.getElementById('main-content');
 
 // Mock message data; replace with real API call as needed
-const messages = [
-    { id: 3, sender: 'Alice', text: 'Hey, how are you?', time: '10:30', self: false },
-    { id: 4, sender: 'You', text: 'I am good, thanks!', time: '10:31', self: true },
-    { id: 5, sender: 'Alice', text: 'Want to catch up later?', time: '10:32', self: false },
-    { id: 6, sender: 'Bob', text: 'Hello!', time: '11:00', self: false },
-    { id: 7, sender: 'You', text: 'Hi Bob!', time: '11:01', self: true },
-];
+const messages = [];
+let currentUser =
+
+// Fetch messages from API
+async function fetchMessages() {
+    const res = await fetch('/api/messages');
+    if (res.ok) {
+        messages = await res.json();
+    } else {
+        messages = [];
+    }
+}
 
 // Helper to group messages by chat partner
 function getConversations() {
     const convMap = {};
     messages.forEach(msg => {
-        const partner = msg.self ? msg.sender : msg.sender;
-        if (partner === 'You') return; // skip self
+        // Assuming msg.sender and msg.receiver fields
+        const partner = msg.sender === currentUser ? msg.receiver_id : msg.sender_id;
+        if (partner === currentUser) return;
         if (!convMap[partner]) convMap[partner] = [];
         convMap[partner].push(msg);
     });
-    // Convert to array and sort by last message id (descending)
     return Object.entries(convMap)
         .map(([partner, msgs]) => ({
             partner,
