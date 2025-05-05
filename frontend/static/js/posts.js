@@ -184,7 +184,16 @@ async function fetchPosts(append = false) {
             throw new Error(error.message || 'Failed to fetch posts');
         }
         const posts = await response.json();
-        const postsList = document.getElementById('posts-list');
+        const mainContent = document.getElementById('main-content');
+         // Ensure posts-list exists inside main-content
+         let postsList = document.getElementById('posts-list');
+         if (!postsList) {
+             postsList = document.createElement('div');
+             postsList.id = 'posts-list';
+             mainContent.innerHTML= '';
+             mainContent.appendChild(postsList);
+            }
+        // const postsList = document.getElementById('posts-list');
         if (!posts || posts.length === 0) {
             if (!append) {
                 postsList.innerHTML = '<p>No posts yet. Be the first to create one!</p>';

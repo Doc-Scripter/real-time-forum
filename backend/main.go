@@ -6,11 +6,10 @@ import (
 
 	"forum/database"
 	"forum/handlers"
-	"forum/middleware"
 )
 
 func main() {
-	err := database.InitDB("./forum.db")
+	err := database.InitDB("./database/data/forum.db")
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v. Ensure the file exists and is accessible.", err)
 	}
@@ -23,7 +22,7 @@ func main() {
 	http.HandleFunc("/api/posts", handlers.GetPostsHandler)
 	http.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
 	http.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
-	http.HandleFunc("/api/stats", handlers.GetForumStatsHandler)
+	http.HandleFunc("/api/status", handlers.GetForumStatusHandler)
 
 	// API routes - Protected
 	protectedMux := http.NewServeMux()
@@ -36,10 +35,10 @@ func main() {
 	protectedMux.HandleFunc("/api/comments/like", handlers.CreateCommentLikeHandler)
 
 	// Registering routes
-	http.Handle("/api/protected/", middleware.AuthMiddleware(http.StripPrefix("/api/protected", protectedMux)))
+	// http.Handle("/api/protected/", middleware.AuthMiddleware(http.StripPrefix("/api/protected", protectedMux)))
 
 	// Applying CORS middleware to all API routes
-	http.Handle("/api/", middleware.CorsMiddleware(http.DefaultServeMux))
+	// http.Handle("/api/", middleware.CorsMiddleware(http.DefaultServeMux))
 
 	// Start server
 	log.Println("Server started on http://localhost:9111")

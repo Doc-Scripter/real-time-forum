@@ -28,6 +28,10 @@
 					<i class="fas fa-search"></i>
 					Search
 				</button> -->
+				<button id="inbox-btn">
+					<i class="fas fa-envelope"></i>
+					Inbox
+				</button>
 				<div id="auth-buttons">
 					<button onclick="openAuthModal('login')" class="auth-btn">Login</button>
 					<button onclick="openAuthModal('register')" class="auth-btn">Register</button>
@@ -64,7 +68,7 @@
 
 		</aside>
 
-		<section class="main-content">
+		<section class="main-content" id="main-content">
 			<div class="content-header">
 				<h2>Recent Posts</h2>
 				<!-- TO DO: ADD QUICK SORT OPTIONS FOR MOST LIKED AND MOST COMMENTED -->
@@ -89,23 +93,7 @@
 				<h3>Quick Forum Stats</h3>
 				<!-- Trending -->
 			</div>
-			<div class="online-users">
-				<h3>Follow Us</h3>
-				<div class="social-links">
-					<a href="https://github.com/#" target="_blank" class="social-link github">
-						<i class="fab fa-github"></i>
-					</a>
-					<a href="https://twitter.com/#" target="_blank" class="social-link twitter">
-						<i class="fab fa-twitter"></i>
-					</a>
-					<a href="https://linkedin.com/in/#" target="_blank" class="social-link linkedin">
-						<i class="fab fa-linkedin"></i>
-					</a>
-					<a href="https://discord.gg/#" target="_blank" class="social-link discord">
-						<i class="fab fa-discord"></i>
-					</a>
-				</div>
-			</div>
+			
 		</aside>
 	</main>
 
@@ -192,10 +180,12 @@
 	<script src="/static/js/auth.js"></script>
 	<script src="/static/js/comments.js"></script>
 	<script src="/static/js/posts.js"></script>
-	<script src="/static/js/filters.js"></script>
+	<!-- <script src="/static/js/filters.js"></script> -->
 	<script src="/static/js/main.js"></script>
-	<script src="/static/js/stats.js"></script>
+	<script src="/static/js/status.js"></script>
 	<script src="/static/js/toggle.js"></script>
+	<script src="/static/js/inbox.js"></script>
+
 
 </body>
 </html>
