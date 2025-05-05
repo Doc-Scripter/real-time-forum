@@ -14,8 +14,8 @@ import (
 
 type Message struct {
 	Data any `json:"data"`
-	Sender string      `json:"from,omitempty"`
-	Receiver   string      `json:"to,omitempty"`
+	Sender string      `json:"sender"`
+	Receiver   string      `json:"receiver"`
 }
 
 var (
@@ -46,29 +46,42 @@ func handleMessages() {
 	}
 }
 
-func getMessages(user_id string) []Message {
-	var args interface{user_id  offset}
+func getMessages(user_id string, receiver string)  {
+	var args = []any{user_id, receiver}
 
 
 	query := `
-			SELECT 	p.id, p.user_id, u.username, p.title, p.content, p.created_at,
-			WHERE pc.category_id = ?
-			ORDER BY p.created_at DESC`
+			SELECT message FROM messages
+			WHERE user_id = ? AND receiver_id = ?
+			ORDER BY created_at DESC`
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
 		fmt.Errorf("error querying posts: %v", err)
-		return nil
+		return 
 	}
 	defer rows.Close()
-	return args
+	// var Messages []Message
+	for rows.Next() {
+		var msg Message
+		if err := rows.Scan(&msg.Data); err != nil {
+			fmt.Errorf("error scanning rows: %v", err)
+			return 
+		}
+		msg.Sender = user_id
+		msg.Receiver = receiver
+		messages = append(messages, msg)
+	}
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(messages)
+
 	switch r.Method {
 	case http.MethodGet:
 		messagesMutex.Lock()
 		defer messagesMutex.Unlock()
 		w.Header().Set("Content-Type", "application/json")
+		// Ensure each message contains Data, Sender, and Receiver fields
 		json.NewEncoder(w).Encode(messages)
 	case http.MethodPost:
 		var msg Message

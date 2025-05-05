@@ -2,13 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-	"time"
 	"forum/database"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 type UserStatus struct {
-	Username string `json:"username"`
+	receiver string `json:"receiver"`
+	username string `json:"username"`
 	Online   bool   `json:"online"`
 }
 
@@ -32,7 +34,9 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 			"SELECT expires_at FROM sessions WHERE user_id = ? ORDER BY expires_at DESC LIMIT 1", id,
 		).Scan(&expiresAt)
 		online := err == nil && expiresAt.After(time.Now())
-		users = append(users, UserStatus{Username: username, Online: online})
+		receiver := strconv.Itoa(id)
+		
+		users = append(users, UserStatus{receiver: receiver, username: username, Online: online})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
