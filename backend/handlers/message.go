@@ -16,7 +16,7 @@ type Message struct {
 var (
 	messages      []Message
 	messagesMutex sync.Mutex
-	// upgrader      = websocket.Upgrader{}
+	upgrader      = websocket.Upgrader{}
 	clients       = make(map[*websocket.Conn]bool)
 	broadcast     = make(chan Message)
 )
