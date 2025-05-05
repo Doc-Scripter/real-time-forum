@@ -2,15 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
+
+	"forum/database"
+	"forum/utils"
 
 	"github.com/gorilla/websocket"
 )
 
 type Message struct {
-	User    string `json:"user"`
-	Content string `json:"content"`
+	Data any `json:"data"`
+	Sender string      `json:"from,omitempty"`
+	Receiver   string      `json:"to,omitempty"`
 }
 
 var (
@@ -41,7 +46,24 @@ func handleMessages() {
 	}
 }
 
-func messageHandler(w http.ResponseWriter, r *http.Request) {
+func getMessages(user_id string) []Message {
+	var args interface{user_id  offset}
+
+
+	query := `
+			SELECT 	p.id, p.user_id, u.username, p.title, p.content, p.created_at,
+			WHERE pc.category_id = ?
+			ORDER BY p.created_at DESC`
+	rows, err := database.DB.Query(query, args...)
+	if err != nil {
+		fmt.Errorf("error querying posts: %v", err)
+		return nil
+	}
+	defer rows.Close()
+	return args
+}
+
+func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		messagesMutex.Lock()
@@ -51,7 +73,7 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var msg Message
 		if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			utils.ErrorMessage(w, "Invalid Request", http.StatusBadRequest)
 			return
 		}
 		messagesMutex.Lock()
@@ -60,11 +82,12 @@ func messageHandler(w http.ResponseWriter, r *http.Request) {
 		broadcast <- msg
 		w.WriteHeader(http.StatusCreated)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		utils.ErrorMessage(w, "Method not allowed", http.StatusBadRequest)
+		return
 	}
 }
 
-func messageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
+func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)

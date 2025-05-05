@@ -24,6 +24,9 @@ func main() {
 	http.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
 	http.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
 	http.HandleFunc("/api/status", handlers.GetForumStatusHandler)
+	http.HandleFunc("/api/messages", handlers.MessageHandler)
+	http.HandleFunc("/api/messaging", handlers.MessageWebSocketHandler)
+
 
 	// API routes - Protected
 	protectedMux := http.NewServeMux()
