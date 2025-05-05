@@ -1,6 +1,6 @@
 async function fetchAndDisplayOnlineUsers() {
     try {
-        // const response = await fetch('/api/status');
+        const response = await fetch('/api/status');
         if (!response.ok) {
             throw new Error('Failed to fetch online users');
         }
