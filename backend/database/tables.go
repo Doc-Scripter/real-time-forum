@@ -66,13 +66,11 @@ var TableCreationStatements = []string{
 	`CREATE TABLE IF NOT EXISTS messages (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER NOT NULL,
-		sender_id INTEGER NOT NULL,
 		receiver_id INTEGER NOT NULL,
-		message_id INTEGER NOT NULL,
 		message TEXT DEFAULT "",
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (user_id) REFERENCES users(id),
-		UNIQUE(user_id, message_id)
+		UNIQUE(user_id, receiver_id, message)
 	);`,
 	`INSERT OR IGNORE INTO categories (name) VALUES 
 		('Technology'),
