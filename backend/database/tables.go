@@ -63,6 +63,17 @@ var TableCreationStatements = []string{
 		FOREIGN KEY (comment_id) REFERENCES comments(id),
 		UNIQUE(user_id, comment_id)
 	);`,
+	`CREATE TABLE IF NOT EXISTS messages (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		sender_id INTEGER NOT NULL,
+		receiver_id INTEGER NOT NULL,
+		message_id INTEGER NOT NULL,
+		message TEXT DEFAULT "",
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id),
+		UNIQUE(user_id, message_id)
+	);`,
 	`INSERT OR IGNORE INTO categories (name) VALUES 
 		('Technology'),
 		('Sports'),
