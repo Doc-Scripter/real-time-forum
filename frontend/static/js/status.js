@@ -1,6 +1,6 @@
 async function fetchAndDisplayOnlineUsers() {
     try {
-        const response = await fetch('/api/status');
+        // const response = await fetch('/api/status');
         if (!response.ok) {
             throw new Error('Failed to fetch online users');
         }
@@ -35,7 +35,7 @@ styling.innerHTML = `
 document.head.appendChild(styling);
 
 // Update online users every 30 seconds
-setInterval(fetchAndDisplayOnlineUsers, 30000);
+// setInterval(fetchAndDisplayOnlineUsers, 30000);
 
 // Initial load
 document.addEventListener('DOMContentLoaded', fetchAndDisplayOnlineUsers);
