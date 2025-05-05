@@ -1,11 +1,10 @@
 #Ignore Compiled Files
 backend/database/forum.db
 TODO
-*test_forum.db
+test_forum.db
 backend/handlers/test_forum.db
 backend/database/test_forum.db
 /.github
-/.qodo
 forum.db
 backend/queries/test_forum.db
 .qodo
