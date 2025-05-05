@@ -8,3 +8,4 @@ backend/database/test_forum.db
 /.qodo
 forum.db
 backend/queries/test_forum.db
+.qodo
