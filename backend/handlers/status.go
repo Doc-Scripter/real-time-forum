@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"forum/database"
+	"forum/models"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,7 +16,7 @@ type UserStatus struct {
 }
 
 func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, username FROM users")
+	rows, err := database.DB.Query("SELECT id, username FROM users WHERE id != ?",models.CurrentUser)
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
@@ -38,6 +39,7 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 		
 		users = append(users, UserStatus{receiver: receiver, username: username, Online: online})
 	}
+	println(users)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
