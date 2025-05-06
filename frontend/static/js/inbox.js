@@ -9,28 +9,26 @@ let currentUser = null // Set this after fetching user info
 // Fetch current user from auth status endpoint
 // Fetch current user from auth status endpoint
 async function fetchCurrentUser() {
-    console.log("checking for current user: ")
-    const res = await fetch('/api/auth/status')
-    let data = {};
+    console.log("checking for current user: ");
     try {
-        const text = await res.text()
-        if (text) {
-            data = JSON.parse(text);
-            console.log(data)
+        const res = await fetch('/api/auth/status');
+        if (!res.ok) throw new Error("Network response was not ok");
+        const data = await res.json();
+        console.log(data);
+        if (data.authenticated) {
+            currentUser = data.username;
+            currentUserId = data.user_id;
+        } else {
+            currentUser = null;
+            currentUserId = null;
         }
     } catch (e) {
-        console.error("Failed to parse JSON:", e);
-        data = {};
+        console.error("Failed to fetch or parse current user:", e);
+        currentUser = null;
+        currentUserId = null;
     }
-    if (data.authenticated) {
-        currentUser = data.username;
-        currentUserId=data.user_id
-    } else {
-        currentUser = null
-    }
-    console.log("current user", currentUser);
+    console.log("current user", currentUser, "user_id", currentUserId);
 }
-
 
 // Fetch messages from API
 async function fetchMessages() {
