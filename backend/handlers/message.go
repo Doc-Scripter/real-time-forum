@@ -26,25 +26,25 @@ var (
 	broadcast     = make(chan Message)
 )
 
-func init() {
-	go handleMessages()
-}
+// func init() {
+// 	go handleMessages()
+// }
 
-func handleMessages() {
-	for {
-		msg := <-broadcast
-		messagesMutex.Lock()
-		messages = append(messages, msg)
-		messagesMutex.Unlock()
-		for client := range clients {
-			err := client.WriteJSON(msg)
-			if err != nil {
-				client.Close()
-				delete(clients, client)
-			}
-		}
-	}
-}
+// func handleMessages() {
+// 	for {
+// 		msg := <-broadcast
+// 		messagesMutex.Lock()
+// 		messages = append(messages, msg)
+// 		messagesMutex.Unlock()
+// 		for client := range clients {
+// 			err := client.WriteJSON(msg)
+// 			if err != nil {
+// 				client.Close()
+// 				delete(clients, client)
+// 			}
+// 		}
+// 	}
+// }
 
 func getMessages(user_id string, receiver string)  {
 	var args = []any{user_id, receiver}
@@ -101,6 +101,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("we are online")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
