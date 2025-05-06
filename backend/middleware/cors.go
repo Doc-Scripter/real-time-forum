@@ -19,6 +19,6 @@ func CorsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		next.ServeHTTP(w, r)
+		// next.ServeHTTP(w, r)
 	})
 }
