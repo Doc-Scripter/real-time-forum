@@ -4,7 +4,13 @@ async function fetchAndDisplayOnlineUsers() {
         if (!response.ok) {
             throw new Error('Failed to fetch online users');
         }
-        const users = await response.json();
+        let users = await response.json();
+        if (!Array.isArray(users)) users = [];
+        if (!users.length ) {
+            const trendingSection = document.querySelector('.trending-section');
+            trendingSection.innerHTML = `<h3>Users</h3><div class="online-users-list">No users online</div>`;
+            return;
+        }
 
         const trendingSection = document.querySelector('.trending-section');
         trendingSection.innerHTML = `

@@ -1,11 +1,36 @@
 // Example selectors; update as needed for your HTML structure
-const inboxBtn = document.getElementById('inbox-btn');
-const mainContent = document.getElementById('main-content');
+const inboxBtn = document.getElementById('inbox-btn')
+const mainContent = document.getElementById('main-content')
 
 // Mock message data; replace with real API call as needed
-const messages = [];
-let ws;
-// let currentUser = null; // Set this after fetching user info
+const messages = []
+let currentUser = null // Set this after fetching user info
+
+// Fetch current user from auth status endpoint
+// Fetch current user from auth status endpoint
+async function fetchCurrentUser() {
+    console.log("checking for current user: ")
+    const res = await fetch('/api/auth/status')
+    let data = {};
+    try {
+        const text = await res.text()
+        if (text) {
+            data = JSON.parse(text);
+            console.log(data)
+        }
+    } catch (e) {
+        console.error("Failed to parse JSON:", e);
+        data = {};
+    }
+    if (data.authenticated) {
+        currentUser = data.username;
+        currentUserId=data.user_id
+    } else {
+        currentUser = null
+    }
+    console.log("current user", currentUser);
+}
+
 
 // Fetch messages from API
 async function fetchMessages() {
@@ -15,6 +40,13 @@ async function fetchMessages() {
     } else {
         messages = [];
     }
+}
+
+// Example: Initialize currentUser before using inbox functionality
+async function initInbox() {
+    await fetchCurrentUser();
+    // Now currentUser is set and can be used throughout inbox logic
+    // e.g., renderInbox();
 }
 
 // Helper to group messages by chat partner
@@ -67,8 +99,8 @@ function renderInbox(username = null, receiverId = null) {
                 const item = e.target.closest('.conversation-item');
                 if (item) {
                     const username = item.dataset.username;
-                    const receiverId = item.dataset.receiverId;
-                    openInboxWithUser(username, receiverId);
+                    // const receiverId = item.dataset.receiverId;
+                    renderChat(username);;
                 }
             };
         }
@@ -113,9 +145,59 @@ function renderInbox(username = null, receiverId = null) {
     };
 }
 
+
+// Render chat with selected user
+async function renderChat(partner) {
+    await fetchMessages();
+    const chatMessages = messages.filter(
+        msg =>
+            (msg.sender === currentUser && msg.receiver === partner) ||
+            (msg.sender === partner && msg.receiver === currentUser)
+    );
+    let chatHTML = `
+        <div class="chat-section">
+            <h2>Chat with ${partner}</h2>
+            <div class="chat-messages">
+                ${chatMessages.map(msg => `
+                    <div class="chat-msg ${msg.sender === currentUser ? 'sent' : 'received'}">
+                        <span class="msg-sender">${msg.sender}:</span>
+                        <span class="msg-text">${msg.text || msg.data}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <form id="send-msg-form" class="send-msg-form">
+                <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" required />
+                <button type="submit">Send</button>
+            </form>
+            <button id="back-to-inbox">Back to Inbox</button>
+        </div>
+    `;
+    mainContent.innerHTML = chatHTML;
+
+    document.getElementById('send-msg-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        if (!text) return;
+        await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sender: currentUser,
+                receiver: partner,
+                text: text
+            })
+        });
+        input.value = '';
+        renderChat(partner); // Refresh chat
+    };
+
+    document.getElementById('back-to-inbox').onclick = () => renderInbox();
+}
+
 // Initialize WebSocket connection
 function initWebSocket() {
-    ws = new WebSocket('ws://localhost:8080/ws'); // Adjust URL as needed
+    ws = new WebSocket('/api/messaging'); // Adjust URL as needed
 
     ws.onopen = () => {
         console.log('WebSocket connected');
@@ -167,7 +249,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Fetch current user (implement as needed)
     const res = await fetch('/api/messages');
     if (res.ok) {
-        currentUser = (await res.json()).sender;
+    initInbox(); // Ensure inbox is initialized before WebSocket connection
+        console.log("currentuser: ",currentUser)
         initWebSocket();
     }
 });
