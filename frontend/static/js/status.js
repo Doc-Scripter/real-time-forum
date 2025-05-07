@@ -5,7 +5,6 @@ async function fetchAndDisplayOnlineUsers() {
             throw new Error('Failed to fetch online users');
         }
         let users = await response.json();
-       console.log("currently in the system: ",users);
         if (!Array.isArray(users)) users = [];
         if (!users.length ) {
             const trendingSection = document.querySelector('.trending-section');
