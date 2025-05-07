@@ -13,9 +13,9 @@ import (
 )
 
 type Message struct {
-	Data any `json:"data"`
-	Sender string      `json:"sender"`
-	Receiver   string      `json:"receiver"`
+	Data     any    `json:"data"`
+	Sender   string `json:"sender"`
+	Receiver string `json:"receiver"`
 }
 
 var (
@@ -33,26 +33,30 @@ func init() {
 func handleMessages() {
 	for {
 		msg, ok := <-broadcast
-        if !ok {
-            fmt.Println("broadcast channel closed")
-            return
-        }
-        messagesMutex.Lock()
-        messages = append(messages, msg)
-        messagesMutex.Unlock()
-        for client := range clients {
-            err := client.WriteJSON(msg)
-            if err != nil {
-                client.Close()
-                delete(clients, client)
-            }
-        }
+		if !ok {
+			fmt.Println("broadcast channel closed")
+			return
+		}
+		messagesMutex.Lock()
+		messages = append(messages, msg)
+		messagesMutex.Unlock()
+		for client := range clients {
+			// Send an envelope with type and message
+			envelope := map[string]interface{}{
+				"type":    "message",
+				"message": msg,
+			}
+			err := client.WriteJSON(envelope)
+			if err != nil {
+				client.Close()
+				delete(clients, client)
+			}
+		}
 	}
 }
 
-func getMessages(user_id string, receiver string)  {
-	var args = []any{user_id, receiver}
-
+func getMessages(user_id string, receiver string) {
+	args := []any{user_id, receiver}
 
 	query := `
 			SELECT message FROM messages
@@ -61,7 +65,7 @@ func getMessages(user_id string, receiver string)  {
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
 		fmt.Errorf("error querying posts: %v", err)
-		return 
+		return
 	}
 	defer rows.Close()
 	// var Messages []Message
@@ -69,7 +73,7 @@ func getMessages(user_id string, receiver string)  {
 		var msg Message
 		if err := rows.Scan(&msg.Data); err != nil {
 			fmt.Errorf("error scanning rows: %v", err)
-			return 
+			return
 		}
 		msg.Sender = user_id
 		msg.Receiver = receiver
@@ -112,17 +116,17 @@ func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	clients[conn] = true
-    defer func() {
-        conn.Close()
-        delete(clients, conn)
-    }()
+	defer func() {
+		conn.Close()
+		delete(clients, conn)
+	}()
 	for {
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-            fmt.Println("WebSocket read error:", err)
-            break
-        }
+			fmt.Println("WebSocket read error:", err)
+			break
+		}
 		broadcast <- msg
 	}
 }

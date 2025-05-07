@@ -175,13 +175,21 @@ async function renderChat(partner) {
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
         if (!text) return;
+        // Send via WebSocket
+        ws.send(JSON.stringify({
+            sender: currentUser,
+            receiver: partner,
+            data: text
+        }));
+
+        // Also store via REST API
         await fetch('/api/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 sender: currentUser,
                 receiver: partner,
-                text: text
+                data: text
             })
         });
         input.value = '';
@@ -210,6 +218,7 @@ function initWebSocket() {
             if (openChat) renderInbox(data.message.sender);
         }
     };
+    
 
     ws.onclose = () => {
         console.log('WebSocket disconnected, retrying...');
@@ -243,12 +252,12 @@ window.openInboxWithUser = function(username, receiverId) {
 // On page load, fetch user info and initialize WebSocket
 window.addEventListener('DOMContentLoaded', async () => {
     // Fetch current user (implement as needed)
-    const res = await fetch('/api/messages');
-    if (res.ok) {
+    // const res = await fetch('/api/messages');
+    // if (res.ok) {
     await initInbox(); // Ensure inbox is initialized before WebSocket connection
-        console.log("current user: ",currentUser)
-        initWebSocket();
-    }
+    console.log("current user: ",currentUser)
+    initWebSocket();
+    // }
 });
 
 // Add minimal CSS for WhatsApp-like style (should be moved to a CSS file)
