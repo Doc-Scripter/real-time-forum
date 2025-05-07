@@ -26,25 +26,29 @@ var (
 	broadcast     = make(chan Message)
 )
 
-// func init() {
-// 	go handleMessages()
-// }
+func init() {
+	go handleMessages()
+}
 
-// func handleMessages() {
-// 	for {
-// 		msg := <-broadcast
-// 		messagesMutex.Lock()
-// 		messages = append(messages, msg)
-// 		messagesMutex.Unlock()
-// 		for client := range clients {
-// 			err := client.WriteJSON(msg)
-// 			if err != nil {
-// 				client.Close()
-// 				delete(clients, client)
-// 			}
-// 		}
-// 	}
-// }
+func handleMessages() {
+	for {
+		msg, ok := <-broadcast
+        if !ok {
+            fmt.Println("broadcast channel closed")
+            return
+        }
+        messagesMutex.Lock()
+        messages = append(messages, msg)
+        messagesMutex.Unlock()
+        for client := range clients {
+            err := client.WriteJSON(msg)
+            if err != nil {
+                client.Close()
+                delete(clients, client)
+            }
+        }
+	}
+}
 
 func getMessages(user_id string, receiver string)  {
 	var args = []any{user_id, receiver}
@@ -74,7 +78,7 @@ func getMessages(user_id string, receiver string)  {
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(messages)
+	// fmt.Println(messages)
 
 	switch r.Method {
 	case http.MethodGet:
@@ -108,14 +112,17 @@ func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	clients[conn] = true
+    defer func() {
+        conn.Close()
+        delete(clients, conn)
+    }()
 	for {
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			delete(clients, conn)
-			conn.Close()
-			break
-		}
+            fmt.Println("WebSocket read error:", err)
+            break
+        }
 		broadcast <- msg
 	}
 }
