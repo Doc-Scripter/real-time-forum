@@ -13,9 +13,11 @@ import (
 )
 
 type Message struct {
-	Data     any    `json:"data"`
+	ID       int    `json:"id,omitempty"`
+	Text     string `json:"text"`
 	Sender   string `json:"sender"`
 	Receiver string `json:"receiver"`
+	Time     string `json:"time,omitempty"`
 }
 
 var (
@@ -71,7 +73,7 @@ func getMessages(user_id string, receiver string) {
 	// var Messages []Message
 	for rows.Next() {
 		var msg Message
-		if err := rows.Scan(&msg.Data); err != nil {
+		if err := rows.Scan(&msg.Text); err != nil {
 			fmt.Errorf("error scanning rows: %v", err)
 			return
 		}
@@ -97,6 +99,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorMessage(w, "Invalid Request", http.StatusBadRequest)
 			return
 		}
+		fmt.Println("Received message:", msg)
 		messagesMutex.Lock()
 		messages = append(messages, msg)
 		messagesMutex.Unlock()

@@ -1,3 +1,5 @@
+let ws;
+
 // Example selectors; update as needed for your HTML structure
 const inboxBtn = document.getElementById('inbox-btn')
 const mainContent = document.getElementById('main-content')
@@ -157,7 +159,7 @@ async function renderChat(partner) {
                 ${chatMessages.map(msg => `
                     <div class="chat-msg ${msg.sender === currentUser ? 'sent' : 'received'}">
                         <span class="msg-sender">${msg.sender}:</span>
-                        <span class="msg-text">${msg.text || msg.data}</span>
+                        <span class="msg-text">${msg.data}</span>
                     </div>
                 `).join('')}
             </div>
@@ -174,6 +176,7 @@ async function renderChat(partner) {
         e.preventDefault();
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
+        console.log("sending message: ", text);
         if (!text) return;
         // Send via WebSocket
         ws.send(JSON.stringify({
