@@ -5,6 +5,7 @@ async function fetchAndDisplayOnlineUsers() {
             throw new Error('Failed to fetch online users');
         }
         let users = await response.json();
+       console.log("currently in the system: ",users);
         if (!Array.isArray(users)) users = [];
         if (!users.length ) {
             const trendingSection = document.querySelector('.trending-section');
@@ -12,12 +13,13 @@ async function fetchAndDisplayOnlineUsers() {
             return;
         }
 
+
         const trendingSection = document.querySelector('.trending-section');
         trendingSection.innerHTML = `
             <h3>Users</h3>
             <div class="online-users-list">
-                ${users.map(user => `
-                    <div class="online-user" 
+                ${users.map(user =>
+                    `<div class="online-user" 
                          style="cursor:pointer;" 
                          data-receiver-id="${user.receiver}" 
                          onclick="openInboxWithUser('${user.username}')">
@@ -44,7 +46,7 @@ styling.innerHTML = `
 document.head.appendChild(styling);
 
 // Update online users every 30 seconds
-// setInterval(fetchAndDisplayOnlineUsers, 30000);
+setInterval(fetchAndDisplayOnlineUsers, 30000);
 
 // Initial load
 document.addEventListener('DOMContentLoaded', fetchAndDisplayOnlineUsers);
