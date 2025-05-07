@@ -11,10 +11,8 @@ let currentUser = null // Set this after fetching user info
 async function fetchCurrentUser() {
     console.log("checking for current user: ");
     try {
-        const res = await fetch('/api/auth/status');
-        if (!res.ok) throw new Error("Network response was not ok");
-        const data = await res.json();
-        console.log(data);
+        const response = await fetch('/api/protected/api/auth/status');
+        const data = await response.json();
         if (data.authenticated) {
             currentUser = data.username;
             currentUserId = data.user_id;
@@ -247,8 +245,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Fetch current user (implement as needed)
     const res = await fetch('/api/messages');
     if (res.ok) {
-    initInbox(); // Ensure inbox is initialized before WebSocket connection
-        console.log("currentuser: ",currentUser)
+    await initInbox(); // Ensure inbox is initialized before WebSocket connection
+        console.log("current user: ",currentUser)
         initWebSocket();
     }
 });
