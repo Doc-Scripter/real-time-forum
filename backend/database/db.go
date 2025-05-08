@@ -9,7 +9,7 @@ import (
 
 var DB *sql.DB
 
-func InitDB(dbname string) (err error) {
+func InitializeDatabase(dbname string) (err error) {
 	DB, err = sql.Open("sqlite3", dbname)
 	if err != nil {
 		return
