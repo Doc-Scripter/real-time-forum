@@ -36,38 +36,48 @@ async function checkAuth() {
 }
 
 function validateForm() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const username = document.getElementById('username')?.value.trim();
-
     const messageDiv = document.getElementById('authMessage');
     messageDiv.style.display = 'block';
     messageDiv.className = 'auth-message error';
 
     if (isLoginMode) {
         // Login validation
-        if (!email || !password) {
+        const loginIdentifier = document.getElementById('loginIdentifier').value.trim();
+        const password = document.getElementById('password').value.trim();
+        
+        if (!loginIdentifier || !password) {
             messageDiv.textContent = 'Please fill in all fields';
             return false;
         }
     } else {
-        // Email validation
-        if (!email) {
-            messageDiv.textContent = 'Email is required';
+        // Registration validation
+        const username = document.getElementById('username').value.trim();
+        const nickname = document.getElementById('nickname').value.trim();
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const age = document.getElementById('age').value;
+        const gender = document.getElementById('gender').value;
+        const password = document.getElementById('password').value.trim();
+
+        if (!username || !nickname || !firstName || !lastName || !email || !age || !gender || !password) {
+            messageDiv.textContent = 'Please fill in all fields';
             return false;
         }
+
+        // Age validation
+        if (age < 13) {
+            messageDiv.textContent = 'You must be at least 13 years old to register';
+            return false;
+        }
+
+        // Email validation
         if (!email.includes('@') || !email.includes('.')) {
             messageDiv.textContent = 'Please enter a valid email address';
             return false;
         }
 
         // Password validation
-        if (!password) {
-            messageDiv.textContent = 'Password is required';
-            return false;
-        }
-        
-        // Enhanced password validation
         if (password.length < 8) {
             messageDiv.textContent = 'Password must be at least 8 characters long';
             return false;
@@ -85,12 +95,6 @@ function validateForm() {
         
         if (!/[A-Z]/.test(password)) {
             messageDiv.textContent = 'Password must contain at least one uppercase letter';
-            return false;
-        }
-
-        // Username validation
-        if (!username) {
-            messageDiv.textContent = 'Username is required';
             return false;
         }
     }
@@ -119,6 +123,8 @@ function openAuthModal(mode, message = '') {
     const messageDiv = document.getElementById('authMessage');
     const strengthContainer = document.getElementById('password-strength-container');
     const requirementsDiv = document.getElementById('password-requirements');
+    const loginFields = document.getElementById('loginFields');
+    const registerFields = document.getElementById('registerFields');
     
     modalTitle.textContent = isLoginMode ? 'Login' : 'Register';
     
@@ -131,8 +137,9 @@ function openAuthModal(mode, message = '') {
     // Show/hide password strength elements and requirements based on mode
     strengthContainer.style.display = isLoginMode ? 'none' : 'block';
     requirementsDiv.style.display = isLoginMode ? 'none' : 'block';
+    loginFields.style.display = isLoginMode ? 'block' : 'none';
+    registerFields.style.display = isLoginMode ? 'none' : 'block';
     
-    document.getElementById('usernameGroup').style.display = isLoginMode ? 'none' : 'block';
     document.getElementById('authModal').classList.add('active');
     document.querySelector('.modal-switch').textContent = isLoginMode ? 'Register Instead' : 'Login Instead';
     document.querySelector('.modal-submit').textContent = isLoginMode ? 'Login' : 'Register';
@@ -169,7 +176,7 @@ function startAuthStatusCheck() {
     }, 30000); // Check every 30 seconds
 }
 
-// Called after loging in successfully
+// Called after logging in successfully
 async function handleAuth(event) {
     event.preventDefault();
 
@@ -177,9 +184,27 @@ async function handleAuth(event) {
         return;
     }
 
-    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
-    const username = document.getElementById('username')?.value.trim();
+    let requestBody;
+
+    if (isLoginMode) {
+        const loginIdentifier = document.getElementById('loginIdentifier').value.trim();
+        requestBody = {
+            loginIdentifier,
+            password
+        };
+    } else {
+        requestBody = {
+            username: document.getElementById('username').value.trim(),
+            nickname: document.getElementById('nickname').value.trim(),
+            firstName: document.getElementById('firstName').value.trim(),
+            lastName: document.getElementById('lastName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            age: parseInt(document.getElementById('age').value),
+            gender: document.getElementById('gender').value,
+            password
+        };
+    }
 
     try {
         const response = await fetch(`/api/${isLoginMode ? 'login' : 'register'}`, {
@@ -187,11 +212,7 @@ async function handleAuth(event) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                email,
-                password,
-                username: isLoginMode ? undefined : username
-            })
+            body: JSON.stringify(requestBody)
         });
 
         let data;
@@ -199,34 +220,25 @@ async function handleAuth(event) {
             data = await response.json();
         } catch (jsonError) {
             console.error("JSON Parse Error:", jsonError);
-            data = {};
+            throw new Error('Invalid response from server');
         }
 
         if (!response.ok) {
-            if (response.status === 405) {
-                showAuthError("Invalid request method");
-                return;
-            }
-            if (response.status === 401) {
-                showAuthError("Wrong email or password");
-                return;
-            }
-            showAuthError(data?.message || "Authentication failed");
+            showAuthError(data.message || 'Authentication failed');
             return;
         }
 
         if (isLoginMode) {
-            handleSuccess("Login successful!");
+            showAuthSuccess('Login successful!');
             closeAuthModal();
-            startAuthStatusCheck();
-            window.location.reload();
+            await checkAuth(); // Update UI to reflect logged-in state
+            window.location.reload(); // Refresh the page to update all components
         } else {
-            document.getElementById("authForm").reset();
-            openAuthModal("login", "Registration successful! Please login with your credentials.");
+            openAuthModal('login', 'Registration successful! Please login.');
         }
     } catch (error) {
-        console.error("Login Error:", error);
-        showAuthError("An error occurred. Please try again.");
+        console.error('Auth error:', error);
+        showAuthError('An error occurred. Please try again.');
     }
 }
 
