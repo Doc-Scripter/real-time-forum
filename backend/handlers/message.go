@@ -7,17 +7,18 @@ import (
 	"sync"
 
 	"forum/database"
+	"forum/middleware"
 	"forum/utils"
 
 	"github.com/gorilla/websocket"
 )
 
 type Message struct {
-	ID       int    `json:"id,omitempty"`
-	Text     string `json:"text"`
+	// ID       int    `json:"id,omitempty"`
+	Data     string `json:"data"`
 	Sender   string `json:"sender"`
-	Receiver string `json:"receiver"`
-	Time     string `json:"time,omitempty"`
+	Receiver int `json:"receiver"`
+	Time     string `json:"time"`
 }
 
 var (
@@ -56,7 +57,7 @@ func handleMessages() {
 		}
 	}
 }
-
+/*
 func getMessages(user_id string, receiver string) {
 	args := []any{user_id, receiver}
 
@@ -82,10 +83,18 @@ func getMessages(user_id string, receiver string) {
 		messages = append(messages, msg)
 	}
 }
+*/
+func SaveMessageToDB(senderID, receiverID int, text string) error {
+    _, err := database.DB.Exec(
+        "INSERT INTO messages (sender_id, receiver_id, text) VALUES (?, ?, ?)",
+        senderID, receiverID, text,
+    )
+    return err
+}
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println(messages)
-
+fmt.Println(r.Method)
 	switch r.Method {
 	case http.MethodGet:
 		messagesMutex.Lock()
@@ -99,11 +108,19 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorMessage(w, "Invalid Request", http.StatusBadRequest)
 			return
 		}
-		fmt.Println("Received message:", msg)
-		messagesMutex.Lock()
-		messages = append(messages, msg)
-		messagesMutex.Unlock()
-		broadcast <- msg
+		senderID,ok:=middleware.GetUserID(r)
+		if !ok {
+            utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+		if err := SaveMessageToDB(senderID, msg.Receiver, msg.Data); err != nil {
+            utils.ErrorMessage(w, "Failed to save message", http.StatusInternalServerError)
+            return
+        }
+		// messagesMutex.Lock()
+		// messages = append(messages, msg)
+		// messagesMutex.Unlock()
+		// broadcast <- msg
 		w.WriteHeader(http.StatusCreated)
 	default:
 		utils.ErrorMessage(w, "Method not allowed", http.StatusBadRequest)
