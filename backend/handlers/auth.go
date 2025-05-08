@@ -14,7 +14,6 @@ func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("requested user")
 	userID, ok := middleware.GetUserID(r)
 	
-	models.CurrentUser=userID
 
 	if !ok {
 		json.NewEncoder(w).Encode(map[string]interface{}{
