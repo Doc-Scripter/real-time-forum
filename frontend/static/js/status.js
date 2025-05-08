@@ -1,6 +1,6 @@
 async function fetchAndDisplayOnlineUsers() {
     try {
-        const response = await fetch('/api/protected//api/status');
+        const response = await fetch('/api/protected/api/status');
         if (!response.ok) {
             throw new Error('Failed to fetch online users');
         }
@@ -21,7 +21,7 @@ async function fetchAndDisplayOnlineUsers() {
                     `<div class="online-user" 
                          style="cursor:pointer;" 
                          data-receiver-id="${user.receiver}" 
-                         onclick="openInboxWithUser('${user.username}')">
+                         onclick="openInboxWithUser('${user.username}',${user.receiver})">
                         <span class="status-dot ${user.online ? 'online' : 'offline'}"></span>
                         <span class="receiver">${user.username}</span>
                     </div>
