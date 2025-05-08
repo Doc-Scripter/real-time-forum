@@ -24,13 +24,13 @@ func main() {
 	mux.HandleFunc("/api/posts", handlers.GetPostsHandler)
 	mux.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
 	mux.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
-	mux.HandleFunc("/api/messages", handlers.MessageHandler)
 	mux.HandleFunc("/api/messaging", handlers.MessageWebSocketHandler)
-	mux.HandleFunc("/api/CurrentUser", handlers.CurrentUserHandler)
 	
 	
 	// API routes - Protected
 	protectedMux := http.NewServeMux()
+	// protectedMux.HandleFunc("/api/CurrentUser", handlers.CurrentUserHandler)
+	protectedMux.HandleFunc("/api/messages", handlers.MessageHandler)
 	protectedMux.HandleFunc("/api/status", handlers.GetForumStatusHandler)
 	protectedMux.HandleFunc("/api/auth/status", handlers.AuthStatusHandler)
 	protectedMux.HandleFunc("/api/logout", handlers.LogoutHandler)
