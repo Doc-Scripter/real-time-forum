@@ -5,13 +5,12 @@ const inboxBtn = document.getElementById('inbox-btn')
 const mainContent = document.getElementById('main-content')
 
 // Mock message data; replace with real API call as needed
-const messages = []
+let messages = []
 let currentUser = null // Set this after fetching user info
 
 // Fetch current user from auth status endpoint
 // Fetch current user from auth status endpoint
 async function fetchCurrentUser() {
-    console.log("checking for current user: ");
     try {
         const response = await fetch('/api/protected/api/auth/status');
         const data = await response.json();
@@ -27,17 +26,24 @@ async function fetchCurrentUser() {
         currentUser = null;
         currentUserId = null;
     }
-    console.log("current user", currentUser, "user_id", currentUserId);
 }
 
 // Fetch messages from API
 async function fetchMessages() {
-    const res = await fetch('/api/messages');
-    if (res.ok) {
-        messages = await res.json();
-    } else {
+    try {
+        let res =await fetch('/api/protected/api/messages');
+        if (res.ok) {
+            messages = await res.json();
+        } else {
+            messages = [];
+        }
+        
+    }
+    catch (e) {
+        console.error("Failed to fetch messages:", e);
         messages = [];
     }
+    
 }
 
 // Example: Initialize currentUser before using inbox functionality
@@ -52,7 +58,7 @@ function getConversations() {
     const convMap = {};
     messages.forEach(msg => {
         // Assuming msg.sender and msg.receiver fields
-        const partner = msg.Sender ;
+        const partner = msg.sender ;
         // if (partner === currentUser) return;
         if (!convMap[partner]) convMap[partner] = [];
         convMap[partner].push(msg);
@@ -60,35 +66,69 @@ function getConversations() {
     return Object.entries(convMap)
         .map(([partner, msgs]) => ({
             partner,
-            lastMsg: msgs.slice().sort((a, b) => b.id - a.id)[0]
+            lastMsg: {
+                text: msg.data ||'',
+                time: msg.time || '',
+                receiver: msg.receiver,
+                // ...other fields...
+            }
         }))
         .sort((a, b) => b.lastMsg.id - a.lastMsg.id);
 }
 
 // Render inbox: conversation list or chat view
-function renderInbox(username = null, receiverId = null) {
+async function renderInbox(username = null,receiverId = null) {
+    await fetchCurrentUser()
+    if (!currentUser) {
+        mainContent.innerHTML = "<div>Please log in to view your inbox.</div>";
+        return;
+    }
+    if (!Array.isArray(messages) || messages.length === 0) {
+        mainContent.innerHTML = "<div>No messages found.</div>";
+        return;
+    }
+    
     if (!username) {
         // Show conversation list
         const conversations = getConversations();
         let inboxHTML = `
-            <div class="inbox-section">
-                <h2>Inbox</h2>
-                <div class="conversation-list">
-                    ${conversations.length === 0 ? '<div>No conversations yet.</div>' : conversations.map(conv => `
-                        <div class="conversation-item" 
-                             data-username="${conv.partner}" 
-                             data-receiver-id="${conv.lastMsg.receiver}">
-                            <div class="avatar">${conv.partner[0].toUpperCase()}</div>
-                            <div class="conv-details">
-                                <div class="conv-name">${conv.partner}</div>
-                                <div class="conv-preview">${conv.lastMsg.text.length > 32 ? conv.lastMsg.text.slice(0, 32) + '…' : conv.lastMsg.text}</div>
+    <div class="inbox-section">
+        <h2>Inbox</h2>
+        <div class="conversation-list">
+            ${conversations.length === 0 ? '<div>No conversations yet.</div>' : conversations.map(conv => {
+                const partner = conv.partner || '';
+                const receiverId = conv.lastMsg && conv.lastMsg.receiver ? conv.lastMsg.receiver : '';
+                const lastMsgText = conv.lastMsg ? (conv.lastMsg.data || conv.lastMsg.data || '') : '';
+                const lastMsgTime = conv.lastMsg && conv.lastMsg.time ? conv.lastMsg.time : '';
+                return `
+                    <div class="conversation-item" 
+                         data-username="${partner}" 
+                         data-receiver-id="${receiverId}">
+                        <div class="avatar">${partner[0] ? partner[0].toUpperCase() : '?'}</div>
+                        <div class="conv-details">
+                            <div class="conv-name">${partner}</div>
+                            <div class="conv-preview">
+                                ${lastMsgText.length > 32 ? lastMsgText.slice(0, 32) + '…' : lastMsgText}
                             </div>
+                            <div class="conv-time">${lastMsgTime}</div>
                         </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    </div>
+`;
         mainContent.innerHTML = inboxHTML;
+
+        document.getElementById('send-message-form').onsubmit = (e) => {
+            e.preventDefault();
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (text) {
+                sendMessage(receiverId, text); 
+                input.value = '';
+            }
+        };
 
         // Delegated click handler for conversation items
         const convList = mainContent.querySelector('.conversation-list');
@@ -97,12 +137,13 @@ function renderInbox(username = null, receiverId = null) {
                 const item = e.target.closest('.conversation-item');
                 if (item) {
                     const username = item.dataset.username;
-                    // const receiverId = item.dataset.receiverId;
-                    renderChat(username);;
+                    const receiverId = item.dataset.receiverId;
+                    renderChat(username,receiverId);;
                 }
             };
         }
         return;
+        
     }
 
     // Show chat with specific user
@@ -118,7 +159,7 @@ function renderInbox(username = null, receiverId = null) {
                 ${sortedMessages.map(msg => `
                     <div class="message-bubble ${msg.self ? 'self' : 'other'}">
                         <div class="message-sender">${msg.self ? 'You' : msg.sender}</div>
-                        <div class="message-text">${msg.text}</div>
+                        <div class="message-text">${msg.data}</div>
                         <div class="message-time">${msg.time}</div>
                     </div>
                 `).join('')}
@@ -137,7 +178,7 @@ function renderInbox(username = null, receiverId = null) {
         const input = document.getElementById('message-input');
         const text = input.value.trim();
         if (text) {
-            sendMessage(receiverId || username, text); // Prefer receiverId if available
+            sendMessage(receiverId , text); 
             input.value = '';
         }
     };
@@ -145,13 +186,13 @@ function renderInbox(username = null, receiverId = null) {
 
 
 // Render chat with selected user
-async function renderChat(partner) {
-    await fetchMessages();
+async function renderChat(partner,receiverId) {
+    // await fetchMessages();
     const chatMessages = messages.filter(
         msg =>
-            (msg.sender === currentUser && msg.receiver === partner) ||
-            (msg.sender === partner && msg.receiver === currentUser)
+            (msg.sender === currentUser && msg.receiver === partner) 
     );
+    console.log(chatMessages)
     let chatHTML = `
         <div class="chat-section">
             <h2>Chat with ${partner}</h2>
@@ -191,7 +232,7 @@ async function renderChat(partner) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 sender: currentUser,
-                receiver: partner,
+                receiver: receiverId,
                 data: text
             })
         });
@@ -230,15 +271,23 @@ function initWebSocket() {
 }
 
 // Send message via WebSocket
-function sendMessage(receiver, text) {
+async function sendMessage(receiverId, text) {
     if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
             type: 'message',
             sender: currentUser,
-            receiver,
+            receiverId,
             text,
             time: new Date().toLocaleTimeString()
         }));
+        await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                receiver_id: receiverId,
+                text: text
+            })
+        });
     }
 }
 
@@ -258,7 +307,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     // const res = await fetch('/api/messages');
     // if (res.ok) {
     await initInbox(); // Ensure inbox is initialized before WebSocket connection
-    console.log("current user: ",currentUser)
     initWebSocket();
     // }
 });
