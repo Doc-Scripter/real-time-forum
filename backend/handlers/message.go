@@ -9,6 +9,7 @@ import (
 	"forum/database"
 	"forum/middleware"
 	"forum/utils"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -86,7 +87,7 @@ func getMessages(user_id string, receiver string) {
 */
 func SaveMessageToDB(senderID, receiverID int, text string) error {
     _, err := database.DB.Exec(
-        "INSERT INTO messages (sender_id, receiver_id, text) VALUES (?, ?, ?)",
+        "INSERT INTO messages (user_id, receiver_id, message) VALUES (?, ?, ?)",
         senderID, receiverID, text,
     )
     return err
@@ -108,19 +109,19 @@ fmt.Println(r.Method)
 			utils.ErrorMessage(w, "Invalid Request", http.StatusBadRequest)
 			return
 		}
+		fmt.Println(msg)
 		senderID,ok:=middleware.GetUserID(r)
+		fmt.Println(senderID)
 		if !ok {
             utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
             return
         }
+		fmt.Println(senderID)
 		if err := SaveMessageToDB(senderID, msg.Receiver, msg.Data); err != nil {
             utils.ErrorMessage(w, "Failed to save message", http.StatusInternalServerError)
             return
         }
-		// messagesMutex.Lock()
-		// messages = append(messages, msg)
-		// messagesMutex.Unlock()
-		// broadcast <- msg
+		
 		w.WriteHeader(http.StatusCreated)
 	default:
 		utils.ErrorMessage(w, "Method not allowed", http.StatusBadRequest)
@@ -150,23 +151,7 @@ func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		if msg.Time == "" {
 			msg.Time = time.Now().Format("15:04:05")
 		}
-		// Save message to database if it has content
-		if msg.Data != "" {
-			senderID := 0
-			// Try to get user ID from context if available
-			if userID, ok := middleware.GetUserIDFromUsername(msg.Sender); ok {
-				senderID = userID
-			}
-			
-			if senderID != 0 && msg.Receiver != 0 {
-				err := SaveMessageToDB(senderID, msg.Receiver, msg.Data)
-				if err != nil {
-					fmt.Println("Error saving message to DB:", err)
-				} else {
-					msg.Status = "Delivered"
-				}
-			}
-		}
+		
 		broadcast <- msg
 	}
 }
