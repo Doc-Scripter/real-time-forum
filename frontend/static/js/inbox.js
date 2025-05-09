@@ -264,7 +264,6 @@ function initWebSocket() {
                     sender: data.message.sender || 'Unknown',
                     data: data.message.data || '',
                     time: data.message.time || new Date().toLocaleTimeString(),
-                    status: data.message.status || 'Received',
                     receiver: data.message.receiver || 0
                 };
                 
