@@ -97,7 +97,7 @@ async function renderInbox(username = null,receiverId = null) {
         <div class="conversation-list">
             ${conversations.length === 0 ? '<div>No conversations yet.</div>' : conversations.map(conv => {
                 const partner = conv.partner || '';
-                const receiverId = conv.lastMsg && conv.lastMsg.receiver ? conv.lastMsg.receiver : '';
+                const receiverId = conv.lastMsg && conv.lastMsg.receiver ? parseInt(conv.lastMsg.receiver) : 0;
                 const lastMsgText = conv.lastMsg ? (conv.lastMsg.data || conv.lastMsg.data || '') : '';
                 const lastMsgTime = conv.lastMsg && conv.lastMsg.time ? conv.lastMsg.time : '';
                 return `
@@ -120,15 +120,15 @@ async function renderInbox(username = null,receiverId = null) {
 `;
         mainContent.innerHTML = inboxHTML;
 
-        document.getElementById('send-message-form').onsubmit = (e) => {
-            e.preventDefault();
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (text) {
-                sendMessage(receiverId, text); 
-                input.value = '';
-            }
-        };
+        // document.getElementById('send-message-form').onsubmit = (e) => {
+        //     e.preventDefault();
+        //     const input = document.getElementById('message-input');
+        //     const text = input.value.trim();
+        //     if (text) {
+        //         sendMessage(receiverId, text); 
+        //         input.value = '';
+        //     }
+        // };
 
         // Delegated click handler for conversation items
         const convList = mainContent.querySelector('.conversation-list');
@@ -137,7 +137,7 @@ async function renderInbox(username = null,receiverId = null) {
                 const item = e.target.closest('.conversation-item');
                 if (item) {
                     const username = item.dataset.username;
-                    const receiverId = item.dataset.receiverId;
+                    const receiverId = parseInt(item.dataset.receiverId) || 0;
                     renderChat(username,receiverId);;
                 }
             };
@@ -219,10 +219,15 @@ async function renderChat(partner,receiverId) {
         const text = input.value.trim();
         console.log("sending message: ", text);
         if (!text) return;
+
+        if (!receiverId) {
+            console.error("Missing receiver ID for", partner);
+            return;
+        }
         // Send via WebSocket
         ws.send(JSON.stringify({
             sender: currentUser,
-            receiver: partner,
+            receiver: receiverId,
             data: text
         }));
 
@@ -237,7 +242,7 @@ async function renderChat(partner,receiverId) {
             })
         });
         input.value = '';
-        renderChat(partner); // Refresh chat
+        renderChat(partner,receiverId); // Refresh chat
     };
 
     document.getElementById('back-to-inbox').onclick = () => renderInbox();
@@ -272,7 +277,7 @@ function initWebSocket() {
                 // If chat with sender is open, re-render
                 const openChat = document.querySelector('.inbox-section h2')?.textContent?.includes(message.sender);
                 if (openChat) {
-                    renderInbox(message.sender);
+                    renderInbox(message.sender, message.receiver);
                 }
             }
         } catch (error) {
@@ -289,6 +294,10 @@ function initWebSocket() {
 
 // Send message via WebSocket
 async function sendMessage(receiverId, text) {
+    if (!receiverId || receiverId === 0) {
+        console.error("Invalid receiver ID:", receiverId);
+        return;
+    }
     if (ws && ws.readyState === WebSocket.OPEN) {
         const messageData = {
             type: 'message',
