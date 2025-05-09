@@ -147,6 +147,26 @@ func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("WebSocket read error:", err)
 			break
 		}
+		if msg.Time == "" {
+			msg.Time = time.Now().Format("15:04:05")
+		}
+		// Save message to database if it has content
+		if msg.Data != "" {
+			senderID := 0
+			// Try to get user ID from context if available
+			if userID, ok := middleware.GetUserIDFromUsername(msg.Sender); ok {
+				senderID = userID
+			}
+			
+			if senderID != 0 && msg.Receiver != 0 {
+				err := SaveMessageToDB(senderID, msg.Receiver, msg.Data)
+				if err != nil {
+					fmt.Println("Error saving message to DB:", err)
+				} else {
+					msg.Status = "Delivered"
+				}
+			}
+		}
 		broadcast <- msg
 	}
 }
