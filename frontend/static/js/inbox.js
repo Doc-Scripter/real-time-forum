@@ -67,9 +67,9 @@ function getConversations() {
         .map(([partner, msgs]) => ({
             partner,
             lastMsg: {
-                text: msg.data ||'',
-                time: msg.time || '',
-                receiver: msg.receiver,
+                text: msgs.data ||'',
+                time: msgs.time || '',
+                receiver: msgs.receiver,
                 // ...other fields...
             }
         }))
@@ -254,12 +254,30 @@ function initWebSocket() {
     };
 
     ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'message') {
-            messages.push(data.message);
-            // If chat with sender is open, re-render
-            const openChat = document.querySelector('.inbox-section h2')?.textContent?.includes(data.message.sender);
-            if (openChat) renderInbox(data.message.sender);
+        try {
+            const data = JSON.parse(event.data);
+            console.log("Received message:", data);
+            
+            if (data.type === 'message' && data.message) {
+                // Ensure message has all required fields
+                const message = {
+                    sender: data.message.sender || 'Unknown',
+                    data: data.message.data || '',
+                    time: data.message.time || new Date().toLocaleTimeString(),
+                    status: data.message.status || 'Received',
+                    receiver: data.message.receiver || 0
+                };
+                
+                messages.push(message);
+                
+                // If chat with sender is open, re-render
+                const openChat = document.querySelector('.inbox-section h2')?.textContent?.includes(message.sender);
+                if (openChat) {
+                    renderInbox(message.sender);
+                }
+            }
+        } catch (error) {
+            console.error("Error processing message:", error, event.data);
         }
     };
     
@@ -273,21 +291,38 @@ function initWebSocket() {
 // Send message via WebSocket
 async function sendMessage(receiverId, text) {
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
+        const messageData = {
             type: 'message',
             sender: currentUser,
-            receiverId,
-            text,
-            time: new Date().toLocaleTimeString()
-        }));
-        await fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                receiver_id: receiverId,
-                text: text
-            })
-        });
+            receiver: receiverId,
+            data: text,
+            time: new Date().toLocaleTimeString(),
+            status: 'Sent'
+        };
+        
+        ws.send(JSON.stringify(messageData));
+
+        // Also store via REST API
+        try {
+            const response = await fetch('api/protected/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    receiver: receiverId,
+                    data: text
+                })
+            });
+            
+            if (response.ok) {
+                console.log("Message saved successfully");
+            } else {
+                console.error("Failed to save message");
+            }
+        } catch (error) {
+            console.error("Error saving message:", error);
+        }
+    } else {
+        console.error("WebSocket not connected");
     }
 }
 
