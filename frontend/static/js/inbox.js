@@ -6,7 +6,10 @@ const mainContent = document.getElementById('main-content')
 
 // Mock message data; replace with real API call as needed
 let messages = []
+let lastMessages = []
+
 let currentUser = null // Set this after fetching user info
+let currentUserId = null // Set this after fetching user info
 
 // Fetch current user from auth status endpoint
 // Fetch current user from auth status endpoint
@@ -29,9 +32,11 @@ async function fetchCurrentUser() {
 }
 
 // Fetch messages from API
-async function fetchMessages() {
+async function fetchMessages(receiverId) {
     try {
-        let res =await fetch('/api/protected/api/messages');
+        const url = new URL('/api/protected/api/messages', window.location.origin);
+        url.searchParams.append('receiver', receiverId);
+        let res =await fetch(url.toString());
         if (res.ok) {
             messages = await res.json();
         } else {
@@ -45,53 +50,65 @@ async function fetchMessages() {
     }
     
 }
+async function fetchLastMessages() {
+    try {
+        let res =await fetch('/api/protected/api/messages',);
+        if (res.ok) {
+            lastMessages = await res.json();
+        } else {
+            lastMessages = [];
+        }
+        
+    }
+    catch (e) {
+        console.error("Failed to fetch messages:", e);
+        lastMessages = [];
+    }
+    
+}
 
 // Example: Initialize currentUser before using inbox functionality
 async function initInbox() {
     await fetchCurrentUser();
+    await fetchLastMessages();
     // Now currentUser is set and can be used throughout inbox logic
     // e.g., renderInbox();
 }
 
 // Helper to group messages by chat partner
 function getConversations() {
-    const convMap = {};
-    messages.forEach(msg => {
-        // Assuming msg.sender and msg.receiver fields
-        const partner = msg.sender ;
-        // if (partner === currentUser) return;
-        if (!convMap[partner]) convMap[partner] = [];
-        convMap[partner].push(msg);
-    });
-    return Object.entries(convMap)
-        .map(([partner, msgs]) => ({
-            partner,
-            lastMsg: {
-                text: msgs.data ||'',
-                time: msgs.time || '',
-                receiver: msgs.receiver,
-                // ...other fields...
-            }
-        }))
-        .sort((a, b) => b.lastMsg.id - a.lastMsg.id);
+    // Use lastMessages instead of messages
+    if (!Array.isArray(lastMessages) || lastMessages.length === 0) {
+        return [];
+    }
+    
+    // Each item in lastMessages should already be the last message from each conversation
+    return lastMessages.map(msg => ({
+        partner: msg.sender !== currentUser ? msg.sender : msg.receiver,
+        lastMsg: {
+            data: msg.data || '',
+            time: msg.time || '',
+            receiver: msg.receiver
+        }
+    }));
 }
 
 // Render inbox: conversation list or chat view
-async function renderInbox(username = null,receiverId = null) {
-    await fetchCurrentUser()
+// Render inbox: conversation list or chat view
+async function renderInbox() {
     if (!currentUser) {
         mainContent.innerHTML = "<div>Please log in to view your inbox.</div>";
         return;
     }
+    
     if (!Array.isArray(messages) || messages.length === 0) {
         mainContent.innerHTML = "<div>No messages found.</div>";
         return;
     }
     
-    if (!username) {
-        // Show conversation list
-        const conversations = getConversations();
-        let inboxHTML = `
+    // Show conversation list
+    const conversations = getConversations();
+    let inboxHTML = `
     <div class="inbox-section">
         <h2>Inbox</h2>
         <div class="conversation-list">
@@ -118,89 +135,54 @@ async function renderInbox(username = null,receiverId = null) {
         </div>
     </div>
 `;
-        mainContent.innerHTML = inboxHTML;
-
-        // document.getElementById('send-message-form').onsubmit = (e) => {
-        //     e.preventDefault();
-        //     const input = document.getElementById('message-input');
-        //     const text = input.value.trim();
-        //     if (text) {
-        //         sendMessage(receiverId, text); 
-        //         input.value = '';
-        //     }
-        // };
-
-        // Delegated click handler for conversation items
-        const convList = mainContent.querySelector('.conversation-list');
-        if (convList) {
-            convList.onclick = (e) => {
-                const item = e.target.closest('.conversation-item');
-                if (item) {
-                    const username = item.dataset.username;
-                    const receiverId = parseInt(item.dataset.receiverId) || 0;
-                    renderChat(username,receiverId);;
-                }
-            };
-        }
-        return;
-        
-    }
-
-    // Show chat with specific user
-    let filteredMessages = messages.filter(
-        msg => msg.sender === username || (msg.self && username !== 'You')
-    );
-    const sortedMessages = filteredMessages.slice().sort((a, b) => b.id - a.id);
-    let inboxHTML = `
-        <div class="inbox-section">
-            <button class="back-btn" onclick="renderInbox()" style="margin-bottom:10px;">← Back</button>
-            <h2>Chat with ${username}</h2>
-            <div class="messages-list">
-                ${sortedMessages.map(msg => `
-                    <div class="message-bubble ${msg.self ? 'self' : 'other'}">
-                        <div class="message-sender">${msg.self ? 'You' : msg.sender}</div>
-                        <div class="message-text">${msg.data}</div>
-                        <div class="message-time">${msg.time}</div>
-                    </div>
-                `).join('')}
-            </div>
-            <form id="send-message-form" style="display:flex;gap:8px;margin-top:12px;">
-                <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;" autocomplete="off"/>
-                <button type="submit">Send</button>
-            </form>
-        </div>
-    `;
     mainContent.innerHTML = inboxHTML;
 
-    // Attach send handler
-    document.getElementById('send-message-form').onsubmit = (e) => {
-        e.preventDefault();
-        const input = document.getElementById('message-input');
-        const text = input.value.trim();
-        if (text) {
-            sendMessage(receiverId , text); 
-            input.value = '';
-        }
-    };
+    // Delegated click handler for conversation items
+    const convList = mainContent.querySelector('.conversation-list');
+    if (convList) {
+        convList.onclick = (e) => {
+            const item = e.target.closest('.conversation-item');
+            if (item) {
+                const username = item.dataset.username;
+                const receiverId = parseInt(item.dataset.receiverId) || 0;
+                renderChat(username, receiverId);
+            }
+        };
+    }
 }
 
 
 // Render chat with selected user
 async function renderChat(partner,receiverId) {
-    // await fetchMessages();
-    const chatMessages = messages.filter(
-        msg =>
-            (msg.sender === currentUser && msg.receiver === partner) 
-    );
+    if (!currentUser|| !receiverId) {
+        console.error("renderChat called with invalid partner/ID", partnerUsername, partnerId);
+        renderInbox(); // Go back to inbox if details are missing
+        return;
+    }
+    await fetchMessages(receiverId);
+    if (!Array.isArray(messages)) {
+        console.error("Messages is not an array", messages);
+        messages = [];
+    }
+    const chatMessages = messages.filter(msg => {
+        if (!msg) return false;
+        return (msg.sender === currentUser && msg.receiver === receiverId) || 
+               (msg.sender === partner && msg.receiver === currentUserId);
+    });
     console.log(chatMessages)
     let chatHTML = `
         <div class="chat-section">
+            <button id="back-to-inbox" class="back-btn">← Back to Inbox</button>
             <h2>Chat with ${partner}</h2>
             <div class="chat-messages">
-                ${chatMessages.map(msg => `
+                ${chatMessages.length === 0 ? 
+                  '<div class="no-messages">No messages yet. Start the conversation!</div>' : 
+                  chatMessages.map(msg => `
                     <div class="chat-msg ${msg.sender === currentUser ? 'sent' : 'received'}">
-                        <span class="msg-sender">${msg.sender}:</span>
-                        <span class="msg-text">${msg.data}</span>
+                        <div class="msg-content">
+                            <span class="msg-text">${msg.data}</span>
+                            <span class="msg-time">${msg.time}</span>
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -208,10 +190,17 @@ async function renderChat(partner,receiverId) {
                 <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" required />
                 <button type="submit">Send</button>
             </form>
-            <button id="back-to-inbox">Back to Inbox</button>
         </div>
     `;
     mainContent.innerHTML = chatHTML;
+
+    const messagesContainer = document.querySelector('.chat-messages');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+document.getElementById('back-to-inbox').onclick = () => renderInbox();
+
 
     document.getElementById('send-msg-form').onsubmit = async (e) => {
         e.preventDefault();
@@ -232,22 +221,43 @@ async function renderChat(partner,receiverId) {
         }));
 
         // Also store via REST API
-        await fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sender: currentUser,
-                receiver: receiverId,
-                data: text
-            })
-        });
+        try {
+            const response = await fetch('/api/protected/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    receiver: receiverId,
+                    data: text
+                })
+            });
+            
+            if (response.ok) {
+                // Add the sent message to the local messages array
+                messages.push({
+                    sender: currentUser,
+                    receiver: receiverId,
+                    data: text,
+                    time: new Date().toLocaleTimeString()
+                });
+                
+                // Re-render the chat to show the new message
+                renderChat(partner, receiverId);
+            } else {
+                console.error("Failed to save message");
+            }
+        } catch (error) {
+            console.error("Error saving message:", error);
+        }
+        
         input.value = '';
-        renderChat(partner,receiverId); // Refresh chat
     };
-
-    document.getElementById('back-to-inbox').onclick = () => renderInbox();
 }
 
+// Scroll to the bottom of the chat
+// const chatMessages = document.querySelector('.chat-messages');
+// if (chatMessages) {
+//     chatMessages.scrollTop = chatMessages.scrollHeight;
+// }
 // Initialize WebSocket connection
 function initWebSocket() {
     ws = new WebSocket('/api/messaging'); // Adjust URL as needed
@@ -274,11 +284,11 @@ function initWebSocket() {
                 
                 messages.push(message);
                 
-                // If chat with sender is open, re-render
-                const openChat = document.querySelector('.inbox-section h2')?.textContent?.includes(message.sender);
-                if (openChat) {
-                    renderInbox(message.sender, message.receiver);
-                }
+                 // Always re-render if chat is open for this conversation
+            const currentChat = document.querySelector('.chat-section h2');
+            if (currentChat && currentChat.textContent.includes(message.sender)) {
+                renderChat(message.sender, message.receiver);
+            }
             }
         } catch (error) {
             console.error("Error processing message:", error, event.data);
@@ -341,17 +351,14 @@ if (inboxBtn && mainContent) {
 
 // Expose function globally for status.js and conversation items
 window.openInboxWithUser = function(username, receiverId) {
-    renderInbox(username, receiverId);
+    renderChat(username, receiverId);
 };
 
 // On page load, fetch user info and initialize WebSocket
 window.addEventListener('DOMContentLoaded', async () => {
-    // Fetch current user (implement as needed)
-    // const res = await fetch('/api/messages');
-    // if (res.ok) {
-    await initInbox(); // Ensure inbox is initialized before WebSocket connection
+   
+    await initInbox(); 
     initWebSocket();
-    // }
 });
 
 // Add minimal CSS for WhatsApp-like style (should be moved to a CSS file)
@@ -375,6 +382,20 @@ if (!document.getElementById('inbox-style')) {
     .message-text { margin: 4px 0; }
     .message-time { font-size: 0.75em; color: #999; text-align: right; }
     .back-btn { background: none; border: none; color: #007bff; font-size: 1em; cursor: pointer; }
+    .chat-section { width: 100%; max-width: 500px; margin: 0 auto; background: #f0f0f0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; height: 80vh; }
+    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 0; }
+    .chat-msg { display: flex; margin-bottom: 8px; }
+    .chat-msg.sent { justify-content: flex-end; }
+    .chat-msg.received { justify-content: flex-start; }
+    .msg-content { padding: 8px 12px; border-radius: 18px; max-width: 70%; }
+    .sent .msg-content { background: #dcf8c6; }
+    .received .msg-content { background: #fff; }
+    .msg-text { display: block; margin-bottom: 4px; }
+    .msg-time { font-size: 0.7em; color: #999; display: block; text-align: right; }
+    .send-msg-form { display: flex; gap: 8px; margin-top: 12px; }
+    .send-msg-form input { flex: 1; padding: 8px; border-radius: 20px; border: 1px solid #ddd; }
+    .send-msg-form button { background: #128C7E; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+    .no-messages { text-align: center; color: #999; padding: 20px; }
     `;
     document.head.appendChild(inboxStyle);
 }
