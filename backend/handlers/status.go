@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -18,7 +17,6 @@ type UserStatus struct {
 
 func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r)
-	fmt.Println("userID: ", userID)
 
 	rows, err := database.DB.Query("SELECT id, username FROM users WHERE id != ?", userID)
 	if err != nil {
