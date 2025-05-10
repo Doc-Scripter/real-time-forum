@@ -69,8 +69,7 @@ var TableCreationStatements = []string{
 		receiver_id INTEGER NOT NULL,
 		message TEXT DEFAULT "",
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users(id),
-		UNIQUE(user_id, receiver_id, message)
+		FOREIGN KEY (user_id) REFERENCES users(id)
 	);`,
 	`INSERT OR IGNORE INTO categories (name) VALUES 
 		('Technology'),
