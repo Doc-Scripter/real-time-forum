@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
 	"forum/database"
+	"forum/models"
 )
 
 type UserStatus struct {
+	Receiver int    `json:"receiver"`
 	Username string `json:"username"`
 	Online   bool   `json:"online"`
 }
 
 func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, username FROM users")
+	rows, err := database.DB.Query("SELECT id, username FROM users WHERE id != ?", models.CurrentUser)
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
@@ -27,14 +30,16 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&id, &username); err != nil {
 			continue
 		}
+
 		var expiresAt time.Time
 		err := database.DB.QueryRow(
 			"SELECT expires_at FROM sessions WHERE user_id = ? ORDER BY expires_at DESC LIMIT 1", id,
 		).Scan(&expiresAt)
 		online := err == nil && expiresAt.After(time.Now())
-		users = append(users, UserStatus{Username: username, Online: online})
-	}
 
+		users = append(users, UserStatus{Receiver: id, Username: username, Online: online})
+	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 }

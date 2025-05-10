@@ -1,26 +1,62 @@
+let ws;
+
 // Example selectors; update as needed for your HTML structure
-const inboxBtn = document.getElementById('inbox-btn');
-const mainContent = document.getElementById('main-content');
+const inboxBtn = document.getElementById('inbox-btn')
+const mainContent = document.getElementById('main-content')
 
 // Mock message data; replace with real API call as needed
-const messages = [
-    { id: 3, sender: 'Alice', text: 'Hey, how are you?', time: '10:30', self: false },
-    { id: 4, sender: 'You', text: 'I am good, thanks!', time: '10:31', self: true },
-    { id: 5, sender: 'Alice', text: 'Want to catch up later?', time: '10:32', self: false },
-    { id: 6, sender: 'Bob', text: 'Hello!', time: '11:00', self: false },
-    { id: 7, sender: 'You', text: 'Hi Bob!', time: '11:01', self: true },
-];
+const messages = []
+let currentUser = null // Set this after fetching user info
+
+// Fetch current user from auth status endpoint
+// Fetch current user from auth status endpoint
+async function fetchCurrentUser() {
+    console.log("checking for current user: ");
+    try {
+        const response = await fetch('/api/protected/api/auth/status');
+        const data = await response.json();
+        if (data.authenticated) {
+            currentUser = data.username;
+            currentUserId = data.user_id;
+        } else {
+            currentUser = null;
+            currentUserId = null;
+        }
+    } catch (e) {
+        console.error("Failed to fetch or parse current user:", e);
+        currentUser = null;
+        currentUserId = null;
+    }
+    console.log("current user", currentUser, "user_id", currentUserId);
+}
+
+// Fetch messages from API
+async function fetchMessages() {
+    const res = await fetch('/api/messages');
+    if (res.ok) {
+        messages = await res.json();
+    } else {
+        messages = [];
+    }
+}
+
+// Example: Initialize currentUser before using inbox functionality
+async function initInbox() {
+    await fetchCurrentUser();
+    // Now currentUser is set and can be used throughout inbox logic
+    // e.g., renderInbox();
+}
 
 // Helper to group messages by chat partner
 function getConversations() {
     const convMap = {};
     messages.forEach(msg => {
-        const partner = msg.self ? msg.sender : msg.sender;
-        if (partner === 'You') return; // skip self
+        // Assuming msg.sender and msg.receiver fields
+        const partner = msg.Sender ;
+        // if (partner === currentUser) return;
         if (!convMap[partner]) convMap[partner] = [];
         convMap[partner].push(msg);
     });
-    // Convert to array and sort by last message id (descending)
     return Object.entries(convMap)
         .map(([partner, msgs]) => ({
             partner,
@@ -30,7 +66,7 @@ function getConversations() {
 }
 
 // Render inbox: conversation list or chat view
-function renderInbox(username = null) {
+function renderInbox(username = null, receiverId = null) {
     if (!username) {
         // Show conversation list
         const conversations = getConversations();
@@ -39,7 +75,9 @@ function renderInbox(username = null) {
                 <h2>Inbox</h2>
                 <div class="conversation-list">
                     ${conversations.length === 0 ? '<div>No conversations yet.</div>' : conversations.map(conv => `
-                        <div class="conversation-item" onclick="openInboxWithUser('${conv.partner}')">
+                        <div class="conversation-item" 
+                             data-username="${conv.partner}" 
+                             data-receiver-id="${conv.lastMsg.receiver}">
                             <div class="avatar">${conv.partner[0].toUpperCase()}</div>
                             <div class="conv-details">
                                 <div class="conv-name">${conv.partner}</div>
@@ -51,6 +89,19 @@ function renderInbox(username = null) {
             </div>
         `;
         mainContent.innerHTML = inboxHTML;
+
+        // Delegated click handler for conversation items
+        const convList = mainContent.querySelector('.conversation-list');
+        if (convList) {
+            convList.onclick = (e) => {
+                const item = e.target.closest('.conversation-item');
+                if (item) {
+                    const username = item.dataset.username;
+                    // const receiverId = item.dataset.receiverId;
+                    renderChat(username);;
+                }
+            };
+        }
         return;
     }
 
@@ -72,9 +123,123 @@ function renderInbox(username = null) {
                     </div>
                 `).join('')}
             </div>
+            <form id="send-message-form" style="display:flex;gap:8px;margin-top:12px;">
+                <input id="message-input" type="text" placeholder="Type a message..." style="flex:1;" autocomplete="off"/>
+                <button type="submit">Send</button>
+            </form>
         </div>
     `;
     mainContent.innerHTML = inboxHTML;
+
+    // Attach send handler
+    document.getElementById('send-message-form').onsubmit = (e) => {
+        e.preventDefault();
+        const input = document.getElementById('message-input');
+        const text = input.value.trim();
+        if (text) {
+            sendMessage(receiverId || username, text); // Prefer receiverId if available
+            input.value = '';
+        }
+    };
+}
+
+
+// Render chat with selected user
+async function renderChat(partner) {
+    await fetchMessages();
+    const chatMessages = messages.filter(
+        msg =>
+            (msg.sender === currentUser && msg.receiver === partner) ||
+            (msg.sender === partner && msg.receiver === currentUser)
+    );
+    let chatHTML = `
+        <div class="chat-section">
+            <h2>Chat with ${partner}</h2>
+            <div class="chat-messages">
+                ${chatMessages.map(msg => `
+                    <div class="chat-msg ${msg.sender === currentUser ? 'sent' : 'received'}">
+                        <span class="msg-sender">${msg.sender}:</span>
+                        <span class="msg-text">${msg.data}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <form id="send-msg-form" class="send-msg-form">
+                <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" required />
+                <button type="submit">Send</button>
+            </form>
+            <button id="back-to-inbox">Back to Inbox</button>
+        </div>
+    `;
+    mainContent.innerHTML = chatHTML;
+
+    document.getElementById('send-msg-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        console.log("sending message: ", text);
+        if (!text) return;
+        // Send via WebSocket
+        ws.send(JSON.stringify({
+            sender: currentUser,
+            receiver: partner,
+            data: text
+        }));
+
+        // Also store via REST API
+        await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sender: currentUser,
+                receiver: partner,
+                data: text
+            })
+        });
+        input.value = '';
+        renderChat(partner); // Refresh chat
+    };
+
+    document.getElementById('back-to-inbox').onclick = () => renderInbox();
+}
+
+// Initialize WebSocket connection
+function initWebSocket() {
+    ws = new WebSocket('/api/messaging'); // Adjust URL as needed
+
+    ws.onopen = () => {
+        console.log('WebSocket connected');
+        // Optionally authenticate or identify user
+        ws.send(JSON.stringify({ type: 'auth', user: currentUser }));
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'message') {
+            messages.push(data.message);
+            // If chat with sender is open, re-render
+            const openChat = document.querySelector('.inbox-section h2')?.textContent?.includes(data.message.sender);
+            if (openChat) renderInbox(data.message.sender);
+        }
+    };
+    
+
+    ws.onclose = () => {
+        console.log('WebSocket disconnected, retrying...');
+        setTimeout(initWebSocket, 2000); // Reconnect
+    };
+}
+
+// Send message via WebSocket
+function sendMessage(receiver, text) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            type: 'message',
+            sender: currentUser,
+            receiver,
+            text,
+            time: new Date().toLocaleTimeString()
+        }));
+    }
 }
 
 // Attach event listener for inbox button
@@ -83,9 +248,20 @@ if (inboxBtn && mainContent) {
 }
 
 // Expose function globally for status.js and conversation items
-window.openInboxWithUser = function(username) {
-    renderInbox(username);
+window.openInboxWithUser = function(username, receiverId) {
+    renderInbox(username, receiverId);
 };
+
+// On page load, fetch user info and initialize WebSocket
+window.addEventListener('DOMContentLoaded', async () => {
+    // Fetch current user (implement as needed)
+    // const res = await fetch('/api/messages');
+    // if (res.ok) {
+    await initInbox(); // Ensure inbox is initialized before WebSocket connection
+    console.log("current user: ",currentUser)
+    initWebSocket();
+    // }
+});
 
 // Add minimal CSS for WhatsApp-like style (should be moved to a CSS file)
 if (!document.getElementById('inbox-style')) {
