@@ -46,6 +46,8 @@ async function fetchMessages(receiverId) {
     messages = [];
   }
 }
+
+
 async function fetchLastMessages() {
   try {
     let res = await fetch("/api/protected/api/messages");
@@ -59,6 +61,31 @@ async function fetchLastMessages() {
     lastMessages = [];
   }
 }
+
+let inboxRefreshInterval;
+
+function startInboxRefresh() {
+  // Clear any existing interval
+  if (inboxRefreshInterval) {
+    clearInterval(inboxRefreshInterval);
+  }
+  
+  // Set new interval to fetch messages and re-render inbox every 5 seconds
+  inboxRefreshInterval = setInterval(async () => {
+    // Only refresh if inbox view is currently open
+    if (mainContent && mainContent.querySelector('.inbox-section')) {
+      await fetchLastMessages();
+      renderInbox();
+    }
+  }, 5000);
+}
+
+function stopInboxRefresh() {
+  if (inboxRefreshInterval) {
+    clearInterval(inboxRefreshInterval);
+    inboxRefreshInterval = null;
+  }
+} 
 
 // Example: Initialize currentUser before using inbox functionality
 async function initInbox() {
@@ -94,6 +121,7 @@ async function renderInbox() {
 
   
   await fetchLastMessages()
+  startInboxRefresh()
 
   // Show conversation list
   const conversations = getConversations();
@@ -158,10 +186,16 @@ async function renderInbox() {
       }
     };
   }
+  
+
 }
+
+// Clean up on page unload
+window.addEventListener('beforeunload', stopInboxRefresh);
 
 // Render chat with selected user
 async function renderChat(partner, receiverId) {
+  startInboxRefresh();
     currentPartner = partner;
     currentReceiverId = receiverId;
   if (!currentUser || !receiverId) {
@@ -276,6 +310,8 @@ async function renderChat(partner, receiverId) {
 
     input.value = "";
   };
+
+
 }
 
 
