@@ -154,8 +154,6 @@ func getLastMessages(userID int) ([]Message, error) {
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println(messages)
-	fmt.Println(r.Method)
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
 		utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
@@ -208,14 +206,12 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			utils.ErrorMessage(w, "Invalid Request", http.StatusBadRequest)
 			return
 		}
-		fmt.Println(msg)
 		senderID, ok := middleware.GetUserID(r)
 		fmt.Println(senderID)
 		if !ok {
 			utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		fmt.Println(senderID)
 		if err := SaveMessageToDB(senderID, msg.Receiver, msg.Data); err != nil {
 			fmt.Println(err)
 			utils.ErrorMessage(w, "Failed to save message", http.StatusInternalServerError)
@@ -230,7 +226,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("we are online")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
