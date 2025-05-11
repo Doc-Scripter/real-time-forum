@@ -1,19 +1,16 @@
 let ws;
 
-// Example selectors; update as needed for your HTML structure
 const inboxBtn = document.getElementById("inbox-btn");
 const mainContent = document.getElementById("main-content");
 
-// Mock message data; replace with real API call as needed
 let messages = [];
 let lastMessages = [];
 
-let currentUser = null; // Set this after fetching user info
-let currentUserId = null; // Set this after fetching user info
+let currentUser = null; 
+let currentUserId = null;
 let currentReceiverId = null;
 let currentPartner = null;
 
-// Fetch current user from auth status endpoint
 // Fetch current user from auth status endpoint
 async function fetchCurrentUser() {
   try {
@@ -95,10 +92,8 @@ async function renderInbox() {
     return;
   }
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    mainContent.innerHTML = "<div>No messages found.</div>";
-    return;
-  }
+  
+  await fetchLastMessages()
 
   // Show conversation list
   const conversations = getConversations();
@@ -173,7 +168,7 @@ async function renderChat(partner, receiverId) {
     console.error(
       "renderChat called with invalid partner/ID",
       partnerUsername,
-      partnerId
+      partner
     );
     renderInbox(); // Go back to inbox if details are missing
     return;
@@ -283,11 +278,7 @@ async function renderChat(partner, receiverId) {
   };
 }
 
-// Scroll to the bottom of the chat
-// const chatMessages = document.querySelector('.chat-messages');
-// if (chatMessages) {
-//     chatMessages.scrollTop = chatMessages.scrollHeight;
-// }
+
 // Initialize WebSocket connection
 function initWebSocket() {
   ws = new WebSocket("/api/messaging"); // Adjust URL as needed
