@@ -45,7 +45,7 @@ styling.innerHTML = `
 document.head.appendChild(styling);
 
 // Update online users every 30 seconds
-setInterval(fetchAndDisplayOnlineUsers, 30000);
+setInterval(fetchAndDisplayOnlineUsers, 5000);
 
 // Initial load
 document.addEventListener('DOMContentLoaded', fetchAndDisplayOnlineUsers);
