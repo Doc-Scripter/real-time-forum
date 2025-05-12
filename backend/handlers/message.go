@@ -4,20 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"forum/database"
+	"forum/middleware"
 	"forum/utils"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 type Message struct {
-	ID       int    `json:"id,omitempty"`
-	Text     string `json:"text"`
+	// ID       int    `json:"id,omitempty"`
+	Data     string `json:"data"`
 	Sender   string `json:"sender"`
-	Receiver string `json:"receiver"`
-	Time     string `json:"time,omitempty"`
+	Receiver int    `json:"receiver"`
+	Time     string `json:"time"`
 }
 
 var (
@@ -57,53 +60,164 @@ func handleMessages() {
 	}
 }
 
-func getMessages(user_id string, receiver string) {
-	args := []any{user_id, receiver}
-
-	query := `
-			SELECT message FROM messages
-			WHERE user_id = ? AND receiver_id = ?
-			ORDER BY created_at DESC`
-	rows, err := database.DB.Query(query, args...)
+func SaveMessageToDB(senderID, receiverID int, text string) error {
+	_, err := database.DB.Exec(
+		"INSERT INTO messages (user_id, receiver_id, message) VALUES (?, ?, ?)",
+		senderID, receiverID, text,
+	)
+	return err
+}
+func getMessages(loggedInUserID, otherUserID int) ([]Message, error) {
+	rows, err := database.DB.Query(
+		`SELECT m.message, u.username AS sender_username, m.receiver_id, m.created_at
+		 FROM messages m
+		 JOIN users u ON m.user_id = u.id
+		 WHERE (m.user_id = ? AND m.receiver_id = ?) OR (m.user_id = ? AND m.receiver_id = ?)
+		 ORDER BY m.created_at ASC`,
+		loggedInUserID, otherUserID,
+		otherUserID, loggedInUserID,
+	)
 	if err != nil {
-		fmt.Errorf("error querying posts: %v", err)
-		return
+		return nil, fmt.Errorf("error querying posts: %v", err)
 	}
 	defer rows.Close()
-	// var Messages []Message
+
+	var allMessages []Message
 	for rows.Next() {
 		var msg Message
-		if err := rows.Scan(&msg.Text); err != nil {
-			fmt.Errorf("error scanning rows: %v", err)
-			return
+		var createdAt time.Time
+
+		if err := rows.Scan(&msg.Data, &msg.Sender, &msg.Receiver, &createdAt); err != nil {
+			return nil, fmt.Errorf("error scanning message row: %v", err)
 		}
-		msg.Sender = user_id
-		msg.Receiver = receiver
-		messages = append(messages, msg)
+
+		msg.Time = createdAt.Format("15:04:05")
+		allMessages = append(allMessages, msg)
 	}
+
+	return allMessages, nil
+}
+
+// New function to get all messages for a user
+func getLastMessages(userID int) ([]Message, error) {
+     // This query gets the last message from each conversation
+    // It uses a subquery to find the max created_at for each conversation pair
+    query := `
+        SELECT m.message, u.username as sender_name, 
+               CASE 
+                   WHEN m.user_id = ? THEN m.receiver_id 
+                   ELSE m.user_id 
+               END as other_user_id,
+               m.created_at
+        FROM messages m
+        JOIN users u ON m.user_id = u.id
+        JOIN (
+            SELECT 
+                CASE 
+                    WHEN user_id = ? THEN receiver_id 
+                    ELSE user_id 
+                END as conversation_partner,
+                MAX(created_at) as latest_time
+            FROM messages
+            WHERE user_id = ? OR receiver_id = ?
+            GROUP BY conversation_partner
+        ) latest ON (
+            (m.user_id = ? AND m.receiver_id = latest.conversation_partner) OR
+            (m.user_id = latest.conversation_partner AND m.receiver_id = ?)
+        ) AND m.created_at = latest.latest_time
+        ORDER BY m.created_at DESC
+    `
+    
+    rows, err := database.DB.Query(query, userID, userID, userID, userID, userID, userID)
+    if err != nil {
+		fmt.Println("error querying last messages: ",err)
+        return nil, fmt.Errorf("error querying last messages: %v", err)
+    }
+    defer rows.Close()
+    
+    var result []Message
+    for rows.Next() {
+        var msg Message
+        var createdAt time.Time
+        var otherUserID int
+        
+        if err := rows.Scan(&msg.Data, &msg.Sender, &otherUserID, &createdAt); err != nil {
+            return nil, fmt.Errorf("error scanning message row: %v", err)
+        }
+        
+        msg.Time = createdAt.Format("15:04:05")
+        msg.Receiver = otherUserID // Set the other user's ID as the receiver
+        result = append(result, msg)
+    }
+    
+    return result, nil
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println(messages)
-
+	userID, ok := middleware.GetUserID(r)
+	if !ok {
+		utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
-		messagesMutex.Lock()
-		defer messagesMutex.Unlock()
+		if r.URL.Query().Has("receiver"){
+		receiverIDStr := r.URL.Query().Get("receiver")
+
+		// Check if we're filtering by receiver
+		if receiverIDStr == "" {
+			utils.ErrorMessage(w, "Invalid receiver ID", http.StatusBadRequest)
+			return
+		}
+		receiverID, err := strconv.Atoi(receiverIDStr)
+		if err != nil {
+			fmt.Println(err)
+			utils.ErrorMessage(w, "error parsing the receiverid", http.StatusBadRequest)
+			return
+		}
+
+		// Get messages between these two users
+		msgs, err := getMessages(userID, receiverID)
+		if err != nil {
+			fmt.Println(err)
+			utils.ErrorMessage(w, "Failed to fetch messages", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		// Ensure each message contains Data, Sender, and Receiver fields
-		json.NewEncoder(w).Encode(messages)
+		json.NewEncoder(w).Encode(msgs)
+		return
+	}else{
+		msgs, err := getLastMessages(userID)
+		if err != nil {
+			fmt.Println(err)
+			utils.ErrorMessage(w, "Failed to fetch messages", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(msgs)
+		return
+	}
+
 	case http.MethodPost:
 		var msg Message
 		if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 			utils.ErrorMessage(w, "Invalid Request", http.StatusBadRequest)
 			return
 		}
-		fmt.Println("Received message:", msg)
-		messagesMutex.Lock()
-		messages = append(messages, msg)
-		messagesMutex.Unlock()
-		broadcast <- msg
+		senderID, ok := middleware.GetUserID(r)
+		fmt.Println(senderID)
+		if !ok {
+			utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if err := SaveMessageToDB(senderID, msg.Receiver, msg.Data); err != nil {
+			fmt.Println(err)
+			utils.ErrorMessage(w, "Failed to save message", http.StatusInternalServerError)
+			return
+		}
+
 		w.WriteHeader(http.StatusCreated)
 	default:
 		utils.ErrorMessage(w, "Method not allowed", http.StatusBadRequest)
@@ -112,7 +226,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("we are online")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
@@ -130,6 +243,10 @@ func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("WebSocket read error:", err)
 			break
 		}
+		if msg.Time == "" {
+			msg.Time = time.Now().Format("15:04:05")
+		}
+
 		broadcast <- msg
 	}
 }

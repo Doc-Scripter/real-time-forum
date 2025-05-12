@@ -14,4 +14,3 @@ type User struct {
     Password  string    `json:"password,omitempty"`
     CreatedAt time.Time `json:"createdAt"`
 }
-var CurrentUser int

@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"forum/models"
+	"fmt"
 	"net/http"
+
+	"forum/middleware"
 )
 
-func CurrentUserHandler(w http.ResponseWriter,r *http.Request){
-	user:=models.CurrentUser
-	json.NewEncoder(w).Encode(user)
+func CurrentUserHandler(w http.ResponseWriter, r *http.Request) {
+	userID, _ := middleware.GetUserID(r)
+	fmt.Println("userID: ", userID)
+	json.NewEncoder(w).Encode(userID)
 }

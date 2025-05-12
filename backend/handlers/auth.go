@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"forum/middleware"
@@ -11,10 +10,7 @@ import (
 )
 
 func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("requested user")
 	userID, ok := middleware.GetUserID(r)
-	
-	models.CurrentUser=userID
 
 	if !ok {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -31,11 +27,10 @@ func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"authenticated": true,
 		"username":      user.Username,
 		"user_id":       user.ID,
-
 	})
 }
