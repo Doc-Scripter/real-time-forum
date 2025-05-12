@@ -14,7 +14,13 @@ import (
 )
 
 type User struct {
+	ID       int    `json:"id"`
 	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+	Age      int    `json:"age"`
+	Gender   string `json:"gender"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -25,8 +31,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var credentials struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		LoginIdentifier string `json:"loginIdentifier"` // Can be either email or nickname
+		Password        string `json:"password"`
 	}
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
@@ -34,17 +40,24 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch the user by email
-	user, err := queries.GetUserByEmail(credentials.Email)
+	// Try to fetch user by email or nickname
+	var user User
+	err = database.DB.QueryRow(`
+		SELECT id, username, nickname, age, gender, first_name, last_name, email, password 
+		FROM users 
+		WHERE email = ? OR nickname = ?`, 
+		credentials.LoginIdentifier, credentials.LoginIdentifier).
+		Scan(&user.ID, &user.Username, &user.Nickname, &user.Age, &user.Gender, &user.FirstName, &user.LastName, &user.Email, &user.Password)
+	
 	if err != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
 	// Verify the password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
 	if err != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
@@ -130,21 +143,24 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate required fields
-	if user.Username == "" || user.Email == "" || user.Password == "" {
-		http.Error(w, "All fields are required", http.StatusBadRequest)
+	if user.Username == "" || user.Email == "" || user.Password == "" || 
+	   user.Nickname == "" || user.FirstName == "" || user.LastName == "" || 
+	   user.Gender == "" || user.Age < 13 {
+		http.Error(w, "All fields are required and age must be at least 13", http.StatusBadRequest)
 		return
 	}
 
-	// Check if username exists
+	// Check if username or nickname exists
 	var exists bool
-	err = database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE username = ?)", user.Username).Scan(&exists)
+	err = database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE username = ? OR nickname = ?)", 
+		user.Username, user.Nickname).Scan(&exists)
 	if err != nil {
-		http.Error(w, "Failed to check username", http.StatusInternalServerError)
+		http.Error(w, "Failed to check username/nickname", http.StatusInternalServerError)
 		return
 	}
 	if exists {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Username already taken"})
+		json.NewEncoder(w).Encode(map[string]string{"message": "Username or nickname already taken"})
 		return
 	}
 
@@ -168,8 +184,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert user into database
-	_, err = database.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-		user.Username, user.Email, string(hashedPassword))
+	_, err = database.DB.Exec(`
+		INSERT INTO users (username, nickname, age, gender, first_name, last_name, email, password) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		user.Username, user.Nickname, user.Age, user.Gender, user.FirstName, user.LastName, 
+		user.Email, string(hashedPassword))
 	if err != nil {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		return

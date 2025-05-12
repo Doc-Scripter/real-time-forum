@@ -10,9 +10,9 @@ import (
 )
 
 func main() {
-	err := database.InitDB("./database/data/forum.db")
-	if err != nil {
-		log.Fatalf("Database initialization failed: %v. Ensure the file exists and is accessible.", err)
+	// Initialize database
+	if err := database.InitDB(); err != nil {
+		log.Fatalf("Database initialization failed: %v", err)
 	}
 
 	// API routes - Public
