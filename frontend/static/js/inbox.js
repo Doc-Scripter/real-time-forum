@@ -96,22 +96,44 @@ async function initInbox() {
 
 // Helper to group messages by chat partner
 function getConversations() {
-  // Use lastMessages instead of messages
   if (!Array.isArray(lastMessages) || lastMessages.length === 0) {
     return [];
   }
 
-  // Each item in lastMessages should already be the last message from each conversation
-  return lastMessages.map((msg) => ({
-    partner: msg.sender !== currentUser ? msg.sender : msg.receiver,
-    lastMsg: {
-      data: msg.data || "",
-      time: msg.time || "",
-      receiver: msg.receiver,
-    },
-  }));
-}
+  console.log("DEBUG - Last Messages:", lastMessages);
+  console.log("DEBUG - Current User:", currentUser);
 
+  return lastMessages.map((msg) => {
+    console.log("DEBUG - Processing message:", msg);
+    
+    // Log values before deciding partner
+    console.log("DEBUG - Sender:", msg.sender);
+    console.log("DEBUG - Receiver:", msg.receiver);
+    let receiverName = msg.receiver;
+        const onlineUsers = document.querySelectorAll('.online-user');
+        onlineUsers.forEach(user => {
+            if (user.dataset.receiverId == msg.receiver) {
+                receiverName = user.querySelector('.receiver').textContent;
+            }
+        });
+
+    
+    const isCurrentUserSender = msg.sender === currentUser;
+    const partner = isCurrentUserSender ? receiverName : msg.sender;
+    
+    console.log("DEBUG - Determined partner:", partner);
+
+    return {
+      partner: partner,
+      lastMsg: {
+        data: msg.data || "",
+        time: msg.time || "",
+        receiver:receiverName, // Changed from msg.sender to msg.receiver
+        receiverId: msg.receiver,
+      },
+    };
+  });
+}
 // Render inbox: conversation list or chat view
 async function renderInbox() {
   if (!currentUser) {
@@ -121,10 +143,13 @@ async function renderInbox() {
 
   
   await fetchLastMessages()
+  console.log("DEBUG - After fetchLastMessages:", lastMessages);
+
   startInboxRefresh()
 
   // Show conversation list
   const conversations = getConversations();
+  console.log("DEBUG - Final conversations:", conversations);
   let inboxHTML = `
     <div class="inbox-section">
         <h2>Inbox</h2>
@@ -136,8 +161,8 @@ async function renderInbox() {
                     .map((conv) => {
                       const partner = conv.partner || "";
                       const receiverId =
-                        conv.lastMsg && conv.lastMsg.receiver
-                          ? parseInt(conv.lastMsg.receiver)
+                        conv.lastMsg && conv.lastMsg.receiverId
+                          ? parseInt(conv.lastMsg.receiverId)
                           : 0;
                       const lastMsgText = conv.lastMsg
                         ? conv.lastMsg.data || conv.lastMsg.data || ""
@@ -201,7 +226,7 @@ async function renderChat(partner, receiverId) {
   if (!currentUser || !receiverId) {
     console.error(
       "renderChat called with invalid partner/ID",
-      partnerUsername,
+      // partnerUsername,
       partner
     );
     renderInbox(); // Go back to inbox if details are missing
