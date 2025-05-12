@@ -207,7 +207,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		senderID, ok := middleware.GetUserID(r)
-		fmt.Println(senderID)
 		if !ok {
 			utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
 			return
