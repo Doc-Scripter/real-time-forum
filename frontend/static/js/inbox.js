@@ -10,6 +10,42 @@ let currentUser = null;
 let currentUserId = null;
 let currentReceiverId = null;
 let currentPartner = null;
+let unreadCheckInterval;
+
+async function checkUnreadMessages() {
+  console.log("DEBUG: Checking unread messages");
+  try {
+      const response = await fetch("/api/protected/api/unread");
+      if (response.ok) {
+          const count = await response.json();
+          console.log("DEBUG: Unread count:", count);
+          const badge = document.getElementById('unread-badge');
+          
+          if (count > 0) {
+              badge.style.display = 'block';
+              badge.textContent = count;
+          } else {
+              badge.style.display = 'none';
+          }
+      }
+  } catch (error) {
+      console.error("DEBUG: Error checking unread messages:", error);
+  }
+}
+
+// Start checking for unread messages
+function startUnreadCheck() {
+  checkUnreadMessages(); // Initial check
+  unreadCheckInterval = setInterval(checkUnreadMessages, 10000); // Check every 10 seconds
+}
+
+// Stop checking for unread messages
+function stopUnreadCheck() {
+  if (unreadCheckInterval) {
+      clearInterval(unreadCheckInterval);
+  }
+}
+
 
 // Fetch current user from auth status endpoint
 async function fetchCurrentUser() {
@@ -216,10 +252,14 @@ async function renderInbox() {
 }
 
 // Clean up on page unload
-window.addEventListener('beforeunload', stopInboxRefresh);
-
+window.addEventListener('beforeunload', () => {
+  stopUnreadCheck();
+  stopInboxRefresh();
+});
 // Render chat with selected user
 async function renderChat(partner, receiverId) {
+  console.log("DEBUG: Opening chat with:", partner);
+  document.getElementById('unread-badge').style.display = 'none'; 
   startInboxRefresh();
     currentPartner = partner;
     currentReceiverId = receiverId;
@@ -244,6 +284,22 @@ async function renderChat(partner, receiverId) {
       (msg.sender === partner && msg.receiver === currentUserId)
     );
   });
+  try {
+    await fetch("/api/protected/api/messages", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            senderId: receiverId
+        })
+    });
+    // Refresh unread count
+    await checkUnreadMessages();
+} catch (error) {
+    console.error("Error marking messages as read:", error);
+}
+
   console.log(chatMessages);
   let chatHTML = `
         <div class="chat-section">
@@ -381,6 +437,7 @@ function initWebSocket() {
           }
           
         }
+        checkUnreadMessages()
       }
     } catch (error) {
       console.error("Error processing message:", error, event.data);
@@ -449,6 +506,7 @@ window.openInboxWithUser = function (username, receiverId) {
 window.addEventListener("DOMContentLoaded", async () => {
   await initInbox();
   initWebSocket();
+  startUnreadCheck();
 });
 
 // Add minimal CSS for WhatsApp-like style (should be moved to a CSS file)
