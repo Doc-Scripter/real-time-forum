@@ -31,6 +31,7 @@ func main() {
 	protectedMux := http.NewServeMux()
 	// protectedMux.HandleFunc("/api/CurrentUser", handlers.CurrentUserHandler)
 	protectedMux.HandleFunc("/api/messages", handlers.MessageHandler)
+	protectedMux.HandleFunc("/api/unread", handlers.UnreadHandler)
 	protectedMux.HandleFunc("/api/status", handlers.GetForumStatusHandler)
 	protectedMux.HandleFunc("/api/auth/status", handlers.AuthStatusHandler)
 	protectedMux.HandleFunc("/api/logout", handlers.LogoutHandler)
