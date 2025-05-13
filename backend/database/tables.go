@@ -73,6 +73,7 @@ var TableCreationStatements = []string{
 		user_id INTEGER NOT NULL,
 		receiver_id INTEGER NOT NULL,
 		message TEXT DEFAULT "",
+		is_read BOOLEAN DEFAULT 0,
 		created_at DATETIME DEFAULT (DATETIME('now', 'localtime')),
 		FOREIGN KEY (user_id) REFERENCES users(id)
 	);`,

@@ -60,9 +60,23 @@ func handleMessages() {
 	}
 }
 
+func MarkMessagesAsRead(receiverID, senderID int) error {
+    query := `
+        UPDATE messages 
+        SET is_read = 1 
+        WHERE receiver_id = ? AND user_id = ?
+    `
+    _, err := database.DB.Exec(query, receiverID, senderID)
+    if err != nil {
+        fmt.Printf("Error marking messages as read: %v\n", err)
+        return err
+    }
+    return nil
+}
+
 func SaveMessageToDB(senderID, receiverID int, text string) error {
 	_, err := database.DB.Exec(
-		"INSERT INTO messages (user_id, receiver_id, message) VALUES (?, ?, ?)",
+		"INSERT INTO messages (user_id, receiver_id, message,is_read) VALUES (?, ?, ?, 0)",
 		senderID, receiverID, text,
 	)
 	return err
@@ -160,6 +174,29 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch r.Method {
+	case http.MethodPut:
+        // Mark messages as read
+        var req struct {
+            SenderID int `json:"senderId"`
+        }
+        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+            utils.ErrorMessage(w, "Invalid request", http.StatusBadRequest)
+            return
+        }
+        
+        userID, ok := middleware.GetUserID(r)
+        if !ok {
+            utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+
+        if err := MarkMessagesAsRead(userID, req.SenderID); err != nil {
+            utils.ErrorMessage(w, "Failed to mark messages as read", http.StatusInternalServerError)
+            return
+        }
+
+        w.WriteHeader(http.StatusOK)
+        return
 	case http.MethodGet:
 		if r.URL.Query().Has("receiver"){
 		receiverIDStr := r.URL.Query().Get("receiver")
@@ -207,7 +244,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		senderID, ok := middleware.GetUserID(r)
-		fmt.Println(senderID)
 		if !ok {
 			utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
 			return

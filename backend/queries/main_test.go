@@ -21,7 +21,7 @@ func deleteTestDb(dbname string) {
 
 func TestMain(m *testing.M) {
 	deleteTestDb(globaldbname)
-	database.InitDB(globaldbname)
+	database.InitDB()
 	defer database.DB.Close()
 	code := m.Run()
 	os.Exit(code)

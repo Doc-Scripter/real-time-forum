@@ -10,6 +10,42 @@ let currentUser = null;
 let currentUserId = null;
 let currentReceiverId = null;
 let currentPartner = null;
+let unreadCheckInterval;
+
+async function checkUnreadMessages() {
+  console.log("DEBUG: Checking unread messages");
+  try {
+      const response = await fetch("/api/protected/api/unread");
+      if (response.ok) {
+          const count = await response.json();
+          console.log("DEBUG: Unread count:", count);
+          const badge = document.getElementById('unread-badge');
+          
+          if (count > 0) {
+              badge.style.display = 'block';
+              badge.textContent = count;
+          } else {
+              badge.style.display = 'none';
+          }
+      }
+  } catch (error) {
+      console.error("DEBUG: Error checking unread messages:", error);
+  }
+}
+
+// Start checking for unread messages
+function startUnreadCheck() {
+  checkUnreadMessages(); // Initial check
+  unreadCheckInterval = setInterval(checkUnreadMessages, 10000); // Check every 10 seconds
+}
+
+// Stop checking for unread messages
+function stopUnreadCheck() {
+  if (unreadCheckInterval) {
+      clearInterval(unreadCheckInterval);
+  }
+}
+
 
 // Fetch current user from auth status endpoint
 async function fetchCurrentUser() {
@@ -96,22 +132,44 @@ async function initInbox() {
 
 // Helper to group messages by chat partner
 function getConversations() {
-  // Use lastMessages instead of messages
   if (!Array.isArray(lastMessages) || lastMessages.length === 0) {
     return [];
   }
 
-  // Each item in lastMessages should already be the last message from each conversation
-  return lastMessages.map((msg) => ({
-    partner: msg.sender !== currentUser ? msg.sender : msg.receiver,
-    lastMsg: {
-      data: msg.data || "",
-      time: msg.time || "",
-      receiver: msg.receiver,
-    },
-  }));
-}
+  console.log("DEBUG - Last Messages:", lastMessages);
+  console.log("DEBUG - Current User:", currentUser);
 
+  return lastMessages.map((msg) => {
+    console.log("DEBUG - Processing message:", msg);
+    
+    // Log values before deciding partner
+    console.log("DEBUG - Sender:", msg.sender);
+    console.log("DEBUG - Receiver:", msg.receiver);
+    let receiverName = msg.receiver;
+        const onlineUsers = document.querySelectorAll('.online-user');
+        onlineUsers.forEach(user => {
+            if (user.dataset.receiverId == msg.receiver) {
+                receiverName = user.querySelector('.receiver').textContent;
+            }
+        });
+
+    
+    const isCurrentUserSender = msg.sender === currentUser;
+    const partner = isCurrentUserSender ? receiverName : msg.sender;
+    
+    console.log("DEBUG - Determined partner:", partner);
+
+    return {
+      partner: partner,
+      lastMsg: {
+        data: msg.data || "",
+        time: msg.time || "",
+        receiver:receiverName, // Changed from msg.sender to msg.receiver
+        receiverId: msg.receiver,
+      },
+    };
+  });
+}
 // Render inbox: conversation list or chat view
 async function renderInbox() {
   if (!currentUser) {
@@ -121,10 +179,13 @@ async function renderInbox() {
 
   
   await fetchLastMessages()
+  console.log("DEBUG - After fetchLastMessages:", lastMessages);
+
   startInboxRefresh()
 
   // Show conversation list
   const conversations = getConversations();
+  console.log("DEBUG - Final conversations:", conversations);
   let inboxHTML = `
     <div class="inbox-section">
         <h2>Inbox</h2>
@@ -136,8 +197,8 @@ async function renderInbox() {
                     .map((conv) => {
                       const partner = conv.partner || "";
                       const receiverId =
-                        conv.lastMsg && conv.lastMsg.receiver
-                          ? parseInt(conv.lastMsg.receiver)
+                        conv.lastMsg && conv.lastMsg.receiverId
+                          ? parseInt(conv.lastMsg.receiverId)
                           : 0;
                       const lastMsgText = conv.lastMsg
                         ? conv.lastMsg.data || conv.lastMsg.data || ""
@@ -191,17 +252,21 @@ async function renderInbox() {
 }
 
 // Clean up on page unload
-window.addEventListener('beforeunload', stopInboxRefresh);
-
+window.addEventListener('beforeunload', () => {
+  stopUnreadCheck();
+  stopInboxRefresh();
+});
 // Render chat with selected user
 async function renderChat(partner, receiverId) {
+  console.log("DEBUG: Opening chat with:", partner);
+  document.getElementById('unread-badge').style.display = 'none'; 
   startInboxRefresh();
     currentPartner = partner;
     currentReceiverId = receiverId;
   if (!currentUser || !receiverId) {
     console.error(
       "renderChat called with invalid partner/ID",
-      partnerUsername,
+      // partnerUsername,
       partner
     );
     renderInbox(); // Go back to inbox if details are missing
@@ -219,6 +284,22 @@ async function renderChat(partner, receiverId) {
       (msg.sender === partner && msg.receiver === currentUserId)
     );
   });
+  try {
+    await fetch("/api/protected/api/messages", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            senderId: receiverId
+        })
+    });
+    // Refresh unread count
+    await checkUnreadMessages();
+} catch (error) {
+    console.error("Error marking messages as read:", error);
+}
+
   console.log(chatMessages);
   let chatHTML = `
         <div class="chat-section">
@@ -356,6 +437,7 @@ function initWebSocket() {
           }
           
         }
+        checkUnreadMessages()
       }
     } catch (error) {
       console.error("Error processing message:", error, event.data);
@@ -424,6 +506,7 @@ window.openInboxWithUser = function (username, receiverId) {
 window.addEventListener("DOMContentLoaded", async () => {
   await initInbox();
   initWebSocket();
+  startUnreadCheck();
 });
 
 // Add minimal CSS for WhatsApp-like style (should be moved to a CSS file)
