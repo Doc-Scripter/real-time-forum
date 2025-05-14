@@ -7,6 +7,6 @@ import (
 
 // Insert a new user
 func CreateUser(user models.User) error {
-	_, err := database.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", user.Username, user.Email, user.Password)
+	_, err := database.DB.Exec("INSERT INTO users (, email, password) VALUES (?, ?, ?)",  user.Email, user.Password)
 	return err
 }
