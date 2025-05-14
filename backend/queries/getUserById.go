@@ -6,5 +6,5 @@ import (
 )
 
 func GetUserByID(user *models.User) error {
-	return database.DB.QueryRow("SELECT username FROM users WHERE id = ?", user.ID).Scan(&user.Username)
+	return database.DB.QueryRow("SELECT nickname FROM users WHERE id = ?", user.ID).Scan(&user.Nickname)
 }
