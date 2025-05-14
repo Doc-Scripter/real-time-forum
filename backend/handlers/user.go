@@ -15,7 +15,7 @@ import (
 
 type User struct {
 	ID       int    `json:"id"`
-	Username string `json:"username"`
+	
 	Nickname string `json:"nickname"`
 	Age      int    `json:"age"`
 	Gender   string `json:"gender"`
@@ -43,11 +43,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Try to fetch user by email or nickname
 	var user User
 	err = database.DB.QueryRow(`
-		SELECT id, username, nickname, age, gender, first_name, last_name, email, password 
+		SELECT id,  nickname, age, gender, first_name, last_name, email, password 
 		FROM users 
 		WHERE email = ? OR nickname = ?`, 
 		credentials.LoginIdentifier, credentials.LoginIdentifier).
-		Scan(&user.ID, &user.Username, &user.Nickname, &user.Age, &user.Gender, &user.FirstName, &user.LastName, &user.Email, &user.Password)
+		Scan(&user.ID, &user.Nickname, &user.Age, &user.Gender, &user.FirstName, &user.LastName, &user.Email, &user.Password)
 	
 	if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -93,7 +93,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message":  "Login successful",
-		"username": user.Username,
+		"nickname": user.Nickname,
 	})
 }
 
@@ -143,7 +143,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate required fields
-	if user.Username == "" || user.Email == "" || user.Password == "" || 
+	if user.Email == "" || user.Password == "" || 
 	   user.Nickname == "" || user.FirstName == "" || user.LastName == "" || 
 	   user.Gender == "" || user.Age < 13 {
 		http.Error(w, "All fields are required and age must be at least 13", http.StatusBadRequest)
@@ -152,15 +152,15 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Check if username or nickname exists
 	var exists bool
-	err = database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE username = ? OR nickname = ?)", 
-		user.Username, user.Nickname).Scan(&exists)
+	err = database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE  nickname = ?)", 
+		 user.Nickname).Scan(&exists)
 	if err != nil {
-		http.Error(w, "Failed to check username/nickname", http.StatusInternalServerError)
+		http.Error(w, "Failed to check nickname", http.StatusInternalServerError)
 		return
 	}
 	if exists {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Username or nickname already taken"})
+		json.NewEncoder(w).Encode(map[string]string{"message": "nickname already taken"})
 		return
 	}
 
@@ -185,9 +185,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Insert user into database
 	_, err = database.DB.Exec(`
-		INSERT INTO users (username, nickname, age, gender, first_name, last_name, email, password) 
+		INSERT INTO users ( nickname, age, gender, first_name, last_name, email, password) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		user.Username, user.Nickname, user.Age, user.Gender, user.FirstName, user.LastName, 
+		 user.Nickname, user.Age, user.Gender, user.FirstName, user.LastName, 
 		user.Email, string(hashedPassword))
 	if err != nil {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
