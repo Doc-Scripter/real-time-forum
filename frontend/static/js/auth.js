@@ -51,7 +51,7 @@ function validateForm() {
         }
     } else {
         // Registration validation
-        const username = document.getElementById('username').value.trim();
+        
         const nickname = document.getElementById('nickname').value.trim();
         const firstName = document.getElementById('firstName').value.trim();
         const lastName = document.getElementById('lastName').value.trim();
@@ -60,7 +60,7 @@ function validateForm() {
         const gender = document.getElementById('gender').value;
         const password = document.getElementById('password').value.trim();
 
-        if (!username || !nickname || !firstName || !lastName || !email || !age || !gender || !password) {
+        if ( !nickname || !firstName || !lastName || !email || !age || !gender || !password) {
             messageDiv.textContent = 'Please fill in all fields';
             return false;
         }
