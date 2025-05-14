@@ -4,7 +4,7 @@ package database
 var TableCreationStatements = []string{
 	`CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		username TEXT UNIQUE NOT NULL,
+		
 		nickname TEXT UNIQUE NOT NULL,
 		age INTEGER NOT NULL,
 		gender TEXT NOT NULL,
