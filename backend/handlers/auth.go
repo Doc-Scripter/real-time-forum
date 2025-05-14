@@ -30,7 +30,7 @@ func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"authenticated": true,
-		"username":      user.Username,
+		"nickname":      user.Nickname,
 		"user_id":       user.ID,
 	})
 }
