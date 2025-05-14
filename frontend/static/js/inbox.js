@@ -172,6 +172,8 @@ function getConversations() {
 }
 // Render inbox: conversation list or chat view
 async function renderInbox() {
+  document.getElementById('toggleRight').style.display = 'flex'; 
+document.getElementById('toggleLeft').style.display = 'flex';
   if (!currentUser) {
     mainContent.innerHTML = "<div>Please log in to view your inbox.</div>";
     return;
@@ -259,6 +261,14 @@ window.addEventListener('beforeunload', () => {
 // Render chat with selected user
 async function renderChat(partner, receiverId) {
   console.log("DEBUG: Opening chat with:", partner);
+  const leftSidebar = document.querySelector('.sidebar-left');
+    const rightSidebar = document.querySelector('.sidebar-right');
+  [leftSidebar, rightSidebar].forEach(sb => {
+    sb.classList.remove('active');
+}); 
+document.getElementById('toggleRight').style.display = 'none'; 
+document.getElementById('toggleLeft').style.display = 'none'; 
+
   document.getElementById('unread-badge').style.display = 'none'; 
   startInboxRefresh();
     currentPartner = partner;
