@@ -317,8 +317,6 @@ async function renderChat(partner, receiverId) {
         senderId: receiverId,
       }),
     });
-    // Refresh unread count
-    await checkUnreadMessages();
   } catch (error) {
     console.error("Error marking messages as read:", error);
   }
@@ -508,9 +506,11 @@ function initWebSocket() {
           ) {
             // Re-render the chat with updated messages
             renderChat(currentPartner, currentReceiverId);
+          }else{
+
+            checkUnreadMessages();
           }
         }
-        checkUnreadMessages();
       }
     } catch (error) {
       console.error("Error processing message:", error, event.data);
