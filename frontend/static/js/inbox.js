@@ -430,7 +430,7 @@ async function renderChat(partner, receiverId) {
   const messagesContainerScroll = document.querySelector(".chat-messages");
 
   messagesContainerScroll.addEventListener("scroll", () => {
-    if (messagesContainerScroll.scrollTop === 0) {
+    if (messagesContainerScroll.scrollTop <=3) {
       loadMoreMessages(receiverId);
     }
   });
@@ -484,7 +484,7 @@ function initWebSocket() {
         const message = {
           sender: data.message.sender,
           data: data.message.data,
-          time: data.message.time || new Date().toLocaleTimeString(),
+          time: data.message.time ,
           receiver: data.message.receiver,
         };
 
@@ -496,7 +496,7 @@ function initWebSocket() {
         ) {
           messages.push(message);
           messageCache[currentReceiverId].messages.push(message);
-          // endIndex + 1;/
+          // endIndex + 1;
 
           // Re-render if viewing this conversation
           const currentChat = document.querySelector(".chat-section h2");
