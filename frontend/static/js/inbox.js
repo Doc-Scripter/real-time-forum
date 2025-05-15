@@ -356,32 +356,18 @@ async function renderChat(partner, receiverId) {
     `;
   mainContent.innerHTML = chatHTML;
 
-  if (isInitialized) {
- 
 
-    const messagesContainer = document.querySelector(".chat-messages");
+  
+  messagesContainer = document.querySelector(".chat-messages");
+
+  if (messagesContainer) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  } else {
-    const messagesContainer = document.querySelector(".chat-messages");
-    const newMessageElements =
-      messagesContainer.querySelectorAll(".chat-msg.new");
-    if (newMessageElements.length > 0) {
-      newMessageElements[0].scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
   }
-
-
-  // if (messagesContainer) {
-  //   messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  // }
 
   document.getElementById("back-to-inbox").onclick = () => renderInbox();
 
   document.getElementById("send-msg-form").onsubmit = async (e) => {
-    endIndex + 1;
+    // endIndex + 1;
     e.preventDefault();
     const input = document.getElementById("msg-input");
     const text = input.value.trim();
@@ -401,6 +387,7 @@ async function renderChat(partner, receiverId) {
         time: new Date().toLocaleTimeString(),
       })
     );
+    
     messageCache[receiverId].messages.push({
       sender: currentUser,
       receiver: receiverId,
@@ -440,10 +427,10 @@ async function renderChat(partner, receiverId) {
     input.value = "";
   };
   // Add scroll event listener to load more messages
-  const messagesContainer = document.querySelector(".chat-messages");
+  const messagesContainerScroll = document.querySelector(".chat-messages");
 
-  messagesContainer.addEventListener("scroll", () => {
-    if (messagesContainer.scrollTop === 0) {
+  messagesContainerScroll.addEventListener("scroll", () => {
+    if (messagesContainerScroll.scrollTop === 0) {
       loadMoreMessages(receiverId);
     }
   });
@@ -509,7 +496,7 @@ function initWebSocket() {
         ) {
           messages.push(message);
           messageCache[currentReceiverId].messages.push(message);
-          endIndex + 1;
+          // endIndex + 1;/
 
           // Re-render if viewing this conversation
           const currentChat = document.querySelector(".chat-section h2");
