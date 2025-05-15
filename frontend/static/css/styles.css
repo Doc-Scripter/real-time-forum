@@ -1507,13 +1507,14 @@ main {
 .chat-msg.sent {
     align-self: flex-end;
     background-color: var(--primary-color);
-    color: white;
+    color: black;
+    border: 1px solid white;
 }
 
 .chat-msg.received {
     align-self: flex-start;
     background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--primary-color);
 }
 
 .msg-content {
