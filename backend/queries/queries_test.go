@@ -12,11 +12,11 @@ func TestCreateUser(t *testing.T) {
 		user    models.User
 		wantErr bool
 	}{
-		{name: "test", user: models.User{Username: "john", Email: "john@gmail.com", Password: "mpass"}, wantErr: false},
+		{name: "test", user: models.User{Nickname: "john", Email: "john@gmail.com", Password: "mpass"}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CreateUser(tt.user); (err != nil) != tt.wantErr {
+			if _, err := CreateUser(tt.user); (err != nil) != tt.wantErr {
 				t.Errorf("CreateUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
