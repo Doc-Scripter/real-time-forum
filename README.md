@@ -1,18 +1,17 @@
-# Forum Project
+# Real-Time-Forum
 
 ## Project Overview
 
-This project is a web forum that allows users to communicate through posts and comments. It includes features such as authentication, post categorization, likes/dislikes, filtering, and is containerized using Docker.
+A modern, single-page forum application featuring real-time interactions, private messaging, and dynamic content management. Built with Golang, WebSockets, and SQLite for efficient performance and seamless user experienc, and is containerized using Docker.
 
 ## Features
 
 ### User Authentication
 
-- Register with email, username, and password.
+- Secure registration (nickname, email, password, profile data)
 
-- Login/logout with session management using cookies.
-
-- Encrypted password storage .
+- Flexible login (email or nickname  combined with the password)
+- Session management with logout capability
 
 ### Posts & Comments
 
@@ -50,11 +49,11 @@ Docker installed on your system.
 
 1. Clone the repository:
    ```
-   git clone https://learn.zone01kisumu.ke/git/johnotieno0/forum.git
+   git clone https://learn.zone01kisumu.ke/git/cliffootieno/real-time-forum
    ```
 2. Navigate to the Project Directory:
    ```
-   cd forum
+   cd real-time-forum
    ```
 3. Build and run the Docker container:
    ```
@@ -89,14 +88,7 @@ We welcome contributions to project! To contribute, follow these steps:
 
 [STEPHEN OGINGA](https://learn.zone01kisumu.ke/git/steodhiambo)
 
-[JOHN OTIENO](https://learn.zone01kisumu.ke/git/johnotieno0)
-
-[KAUNDA RODGERS](https://learn.zone01kisumu.ke/git/krodgers)
-
-[JOAN WAMBUGU](https://learn.zone01kisumu.ke/git/jwambugu)
-
-
-
+[CLIFFORD OTIENO](https://learn.zone01kisumu.ke/git/cliffootieno)
 
 ## License
 
