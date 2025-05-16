@@ -369,7 +369,8 @@ async function renderChat(partner, receiverId) {
     e.preventDefault();
     const input = document.getElementById("msg-input");
     const text = input.value.trim();
-    console.log("sending message: ", text);
+    const sanitizedText=sanitizeHTML(text);
+    console.log("sending message: ", sanitizedText);
     if (!text) return;
 
     if (!receiverId) {
@@ -381,7 +382,7 @@ async function renderChat(partner, receiverId) {
       JSON.stringify({
         sender: currentUser,
         receiver: receiverId,
-        data: text,
+        data: sanitizedText,
         time: new Date().toLocaleTimeString(),
       })
     );
@@ -389,7 +390,7 @@ async function renderChat(partner, receiverId) {
     messageCache[receiverId].messages.push({
       sender: currentUser,
       receiver: receiverId,
-      data: text,
+      data: sanitizedText,
       time: new Date().toLocaleTimeString(),
     });
 
@@ -400,21 +401,23 @@ async function renderChat(partner, receiverId) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiver: receiverId,
-          data: text,
+          data: sanitizedText,
         }),
       });
-
+      const newMessage={
+        sender: currentUser,
+        receiver: receiverId,
+        data: sanitizedText,
+        time: new Date().toLocaleTimeString(),
+      }
       if (response.ok) {
         // Add the sent message to the local messages array
-        messages.push({
-          sender: currentUser,
-          receiver: receiverId,
-          data: text,
-          time: new Date().toLocaleTimeString(),
-        });
+        messages.push(newMessage);
 
         // Re-render the chat to show the new message
-        renderChat(partner, receiverId);
+        // renderChat(partner, receiverId);
+
+        appendNewMessage(newMessage)
       } else {
         console.error("Failed to save message");
       }
@@ -462,6 +465,12 @@ function loadMoreMessages(receiverId) {
   }
 }
 
+function sanitizeHTML(str) {
+  if (typeof str !== 'string') return '';
+  const temp = document.createElement('div');
+  temp.textContent = str; // Assigning to textContent automatically escapes HTML
+  return temp.innerHTML;  // Retrieve the escaped HTML string
+}
 // Initialize WebSocket connection
 function initWebSocket() {
   ws = new WebSocket("/api/messaging"); // Adjust URL as needed
@@ -505,7 +514,8 @@ function initWebSocket() {
               message.receiver === currentPartner)
           ) {
             // Re-render the chat with updated messages
-            renderChat(currentPartner, currentReceiverId);
+            // renderChat(currentPartner, currentReceiverId);
+            appendNewMessage(currentPartner, currentReceiverId)
           }else{
 
             checkUnreadMessages();
@@ -521,6 +531,28 @@ function initWebSocket() {
     console.log("WebSocket disconnected, retrying...");
     setTimeout(initWebSocket, 2000); // Reconnect
   };
+}
+
+function appendNewMessage(message) {
+  const messagesContainer = document.querySelector(".chat-messages");
+  if (!messagesContainer) return;
+  
+  // Create message element
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `chat-msg ${message.sender === currentUser ? "sent" : "received"}`;
+  
+  messageDiv.innerHTML = `
+    <div class="msg-content">
+      <span class="msg-text">${sanitizeHTML(message.data)}</span>
+      <span class="msg-time">${message.time}</span>
+    </div>
+  `;
+  
+  // Append to container
+  messagesContainer.appendChild(messageDiv);
+  
+  // Scroll to bottom to show new message
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Send message via WebSocket
