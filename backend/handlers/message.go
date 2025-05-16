@@ -83,7 +83,7 @@ func SaveMessageToDB(senderID, receiverID int, text string) error {
 }
 func getMessages(loggedInUserID, otherUserID int) ([]Message, error) {
 	rows, err := database.DB.Query(
-		`SELECT m.message, u.username AS sender_username, m.receiver_id, m.created_at
+		`SELECT m.message, u.nickname AS sender_username, m.receiver_id, m.created_at
 		 FROM messages m
 		 JOIN users u ON m.user_id = u.id
 		 WHERE (m.user_id = ? AND m.receiver_id = ?) OR (m.user_id = ? AND m.receiver_id = ?)
@@ -117,7 +117,7 @@ func getLastMessages(userID int) ([]Message, error) {
      // This query gets the last message from each conversation
     // It uses a subquery to find the max created_at for each conversation pair
     query := `
-        SELECT m.message, u.username as sender_name, 
+        SELECT m.message, u.nickname as sender_name, 
                CASE 
                    WHEN m.user_id = ? THEN m.receiver_id 
                    ELSE m.user_id 
