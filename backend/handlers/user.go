@@ -4,67 +4,81 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+	"strings"
 
 	"forum/database"
-	"forum/middleware"
+	"forum/models"
 	"forum/queries"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"fmt"
 )
 
-type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Nickname string `json:"nickname"`
-	Age      int    `json:"age"`
-	Gender   string `json:"gender"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+// Use models.User instead of defining our ow
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Method not allowed",
+		})
 		return
 	}
+
 	var credentials struct {
 		LoginIdentifier string `json:"loginIdentifier"` // Can be either email or nickname
 		Password        string `json:"password"`
 	}
+
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Invalid request payload",
+		})
 		return
 	}
 
 	// Try to fetch user by email or nickname
-	var user User
+	var user models.User
 	err = database.DB.QueryRow(`
-		SELECT id, username, nickname, age, gender, first_name, last_name, email, password 
+		SELECT id,  nickname, age, gender, first_name, last_name, email, password 
 		FROM users 
 		WHERE email = ? OR nickname = ?`, 
 		credentials.LoginIdentifier, credentials.LoginIdentifier).
-		Scan(&user.ID, &user.Username, &user.Nickname, &user.Age, &user.Gender, &user.FirstName, &user.LastName, &user.Email, &user.Password)
+		Scan(&user.ID, &user.Nickname, &user.Age, &user.Gender, &user.FirstName, &user.LastName, &user.Email, &user.Password)
 	
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Invalid credentials",
+		})
 		return
 	}
 
 	// Verify the password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Invalid credentials",
+		})
 		return
 	}
 
 	// Delete any existing sessions for this user
 	err = queries.DeleteUserSessions(user.ID)
 	if err != nil {
-		http.Error(w, "Failed to manage sessions", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Failed to manage sessions",
+		})
 		return
 	}
 
@@ -76,7 +90,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = database.DB.Exec("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
 		sessionToken, user.ID, expiresAt)
 	if err != nil {
-		http.Error(w, "Failed to create session", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Failed to create session",
+		})
 		return
 	}
 
@@ -90,10 +108,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 	})
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message":  "Login successful",
-		"username": user.Username,
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": "true",
+		"message": "Login successful",
+		"user": map[string]interface{}{
+			"nickname": user.Nickname,
+			"email":    user.Email,
+		},
 	})
 }
 
@@ -103,7 +125,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Get user ID from context
-	userID, ok := middleware.GetUserID(r)
+	// Extract user ID from the session or request context
+	userID, ok := r.Context().Value("userID").(int)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -132,68 +155,119 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Method not allowed",
+		})
 		return
 	}
-	var user User
+
+	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": fmt.Sprintf("Error decoding request body: %v", err),
+		})
 		return
 	}
 
 	// Validate required fields
-	if user.Username == "" || user.Email == "" || user.Password == "" || 
-	   user.Nickname == "" || user.FirstName == "" || user.LastName == "" || 
-	   user.Gender == "" || user.Age < 13 {
-		http.Error(w, "All fields are required and age must be at least 13", http.StatusBadRequest)
+	if user.Nickname == "" || user.FirstName == "" || user.LastName == "" || 
+	   user.Email == "" || user.Password == "" || user.Age < 13 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "All fields are required and age must be at least 13",
+		})
 		return
 	}
 
-	// Check if username or nickname exists
+	// Validate email format
+	if !isValidEmail(user.Email) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Invalid email format: must contain '@' and '.'",
+		})
+		return
+	}
+
+	// Check if username or email exists
 	var exists bool
-	err = database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE username = ? OR nickname = ?)", 
-		user.Username, user.Nickname).Scan(&exists)
+	err = database.DB.QueryRow(`
+		SELECT EXISTS(SELECT 1 FROM users WHERE nickname = ? OR email = ?)
+	`, user.Nickname, user.Email).Scan(&exists)
 	if err != nil {
-		http.Error(w, "Failed to check username/nickname", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": fmt.Sprintf("Database error checking username/email: %v", err),
+		})
 		return
 	}
 	if exists {
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Username or nickname already taken"})
-		return
-	}
-
-	// Check if email exists
-	err = database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)", user.Email).Scan(&exists)
-	if err != nil {
-		http.Error(w, "Failed to check email", http.StatusInternalServerError)
-		return
-	}
-	if exists {
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Email already registered"})
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": "Username or email already exists",
+		})
 		return
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": fmt.Sprintf("Error hashing password: %v", err),
+		})
 		return
 	}
 
-	// Insert user into database
-	_, err = database.DB.Exec(`
-		INSERT INTO users (username, nickname, age, gender, first_name, last_name, email, password) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		user.Username, user.Nickname, user.Age, user.Gender, user.FirstName, user.LastName, 
-		user.Email, string(hashedPassword))
+	// Set password and created_at
+	user.Password = string(hashedPassword)
+	user.CreatedAt = time.Now()
+
+	// Create user using the CreateUser function
+	userID, err := queries.CreateUser(user)
 	if err != nil {
-		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"success": "false",
+			"message": fmt.Sprintf("Failed to create user: %v", err),
+		})
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
+	// Set the user ID
+	user.ID = userID
+
+	// Remove sensitive information before sending response
+	user.Password = ""
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"user":    user,
+		"message": "Registration successful",
+	})
 }
+
+// isValidEmail checks if an email address is valid
+func isValidEmail(email string) bool {
+	if email == "" {
+		return false
+	}
+	
+	// Simple email validation
+	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
+		return false
+	}
+	
+	return true
+}
+
