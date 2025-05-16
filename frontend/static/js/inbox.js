@@ -369,7 +369,8 @@ async function renderChat(partner, receiverId) {
     e.preventDefault();
     const input = document.getElementById("msg-input");
     const text = input.value.trim();
-    console.log("sending message: ", text);
+    const sanitizedText=sanitizeHTML(text);
+    console.log("sending message: ", sanitizedText);
     if (!text) return;
 
     if (!receiverId) {
@@ -381,7 +382,7 @@ async function renderChat(partner, receiverId) {
       JSON.stringify({
         sender: currentUser,
         receiver: receiverId,
-        data: text,
+        data: sanitizedText,
         time: new Date().toLocaleTimeString(),
       })
     );
@@ -389,7 +390,7 @@ async function renderChat(partner, receiverId) {
     messageCache[receiverId].messages.push({
       sender: currentUser,
       receiver: receiverId,
-      data: text,
+      data: sanitizedText,
       time: new Date().toLocaleTimeString(),
     });
 
@@ -400,7 +401,7 @@ async function renderChat(partner, receiverId) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiver: receiverId,
-          data: text,
+          data: sanitizedText,
         }),
       });
 
@@ -409,7 +410,7 @@ async function renderChat(partner, receiverId) {
         messages.push({
           sender: currentUser,
           receiver: receiverId,
-          data: text,
+          data: sanitizedText,
           time: new Date().toLocaleTimeString(),
         });
 
@@ -462,6 +463,12 @@ function loadMoreMessages(receiverId) {
   }
 }
 
+function sanitizeHTML(str) {
+  if (typeof str !== 'string') return '';
+  const temp = document.createElement('div');
+  temp.textContent = str; // Assigning to textContent automatically escapes HTML
+  return temp.innerHTML;  // Retrieve the escaped HTML string
+}
 // Initialize WebSocket connection
 function initWebSocket() {
   ws = new WebSocket("/api/messaging"); // Adjust URL as needed
