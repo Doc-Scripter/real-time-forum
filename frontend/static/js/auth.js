@@ -10,8 +10,8 @@ async function checkAuth() {
         
         if (data.authenticated) {
             authButtons.innerHTML = `
-                <div class="auth-status">
-                    <span class="welcome-text">Welcome, ${data.username}</span>
+                <div class="auth-status">-
+                    <span class="welcome-text">Welcome, ${data.nickname}</span>
                     <button onclick="logout()" class="auth-btn logout-btn">Logout</button>
                 </div>
             `;
@@ -195,14 +195,13 @@ async function handleAuth(event) {
         };
     } else {
         requestBody = {
-            username: document.getElementById('username').value.trim(),
             nickname: document.getElementById('nickname').value.trim(),
             firstName: document.getElementById('firstName').value.trim(),
             lastName: document.getElementById('lastName').value.trim(),
             email: document.getElementById('email').value.trim(),
             age: parseInt(document.getElementById('age').value),
             gender: document.getElementById('gender').value,
-            password
+            password: password
         };
     }
 
@@ -210,35 +209,42 @@ async function handleAuth(event) {
         const response = await fetch(`/api/${isLoginMode ? 'login' : 'register'}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(requestBody),
         });
 
-        let data;
-        try {
-            data = await response.json();
-        } catch (jsonError) {
-            console.error("JSON Parse Error:", jsonError);
-            throw new Error('Invalid response from server');
-        }
+        const data = await response.json();
+        console.log('Auth response:', data);
 
-        if (!response.ok) {
-            showAuthError(data.message || 'Authentication failed');
-            return;
+        if (!data.success) {
+            throw new Error(data.message || 'Authentication failed');
         }
 
         if (isLoginMode) {
-            showAuthSuccess('Login successful!');
-            closeAuthModal();
-            await checkAuth(); // Update UI to reflect logged-in state
-            window.location.reload(); // Refresh the page to update all components
+            // Login success
+            showAuthSuccess('Login successful');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
-            openAuthModal('login', 'Registration successful! Please login.');
+            // Registration success
+            showAuthSuccess('Registration successful! Please login.');
+            setTimeout(() => {
+                isLoginMode = true;
+                openAuthModal('login', 'Registration successful! Please login.');
+            }, 1000);
         }
     } catch (error) {
         console.error('Auth error:', error);
-        showAuthError('An error occurred. Please try again.');
+        // Show more detailed error message
+        if (error.message) {
+            showAuthError(error.message);
+        } else if (error.response) {
+            showAuthError(error.response.statusText || 'An error occurred');
+        } else {
+            showAuthError('An error occurred. Please check the console for details.');
+        }
     }
 }
 
