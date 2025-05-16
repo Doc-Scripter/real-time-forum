@@ -1507,13 +1507,14 @@ main {
 .chat-msg.sent {
     align-self: flex-end;
     background-color: var(--primary-color);
-    color: white;
+    color: black;
+    border: 1px solid white;
 }
 
 .chat-msg.received {
     align-self: flex-start;
     background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--primary-color);
 }
 
 .msg-content {
@@ -1540,7 +1541,7 @@ main {
     flex: 1;
     padding: 0.75rem 1rem;
     background-color: var(--bg-elevated);
-    border: 1px solid var(--border-color);
+    border: 1px solid white;
     border-radius: var(--border-radius);
     color: var(--text-primary);
 }
@@ -1687,3 +1688,22 @@ main {
         margin: 0;
     }
 }
+
+/* #msg-input::placeholder {
+    color: white;
+    opacity: 1;
+  }
+
+  #msg-input::-webkit-input-placeholder {
+    color: white;
+  }
+  #msg-input::-moz-placeholder {
+    color: white;
+    opacity: 1;
+  }
+  #msg-input:-ms-input-placeholder {
+    color: white;
+  }
+  #msg-input::-ms-input-placeholder {
+    color: white;
+  } */
