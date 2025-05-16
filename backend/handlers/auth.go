@@ -19,7 +19,7 @@ func AuthStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get username
+	// Get nickname
 	var user models.User
 	user.ID = userID
 	if err := queries.GetUserByID(&user); err != nil {
