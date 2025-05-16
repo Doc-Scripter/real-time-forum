@@ -18,7 +18,7 @@ func TestRegisterHandler(t *testing.T) {
 	// mock registration request request
 	var buffer bytes.Buffer
 	json.NewEncoder(&buffer).Encode(map[string]string{
-		"username": "testuser",
+		"nickname": "testuser",
 		"email":    "test@example.com",
 		"password": "testpassword",
 	})
@@ -38,7 +38,7 @@ func TestLoginHandler(t *testing.T) {
 	// mock registration request request
 	var buffer bytes.Buffer
 	json.NewEncoder(&buffer).Encode(map[string]string{
-		"username": "testuser",
+		"nickname": "testuser",
 		"email":    "test@example.com",
 		"password": "testpassword",
 	})
@@ -114,7 +114,7 @@ func TestLogoutHandler(t *testing.T) {
 	// mock registration request request
 	var buffer bytes.Buffer
 	json.NewEncoder(&buffer).Encode(map[string]string{
-		"username": "testuser",
+		"nickname": "testuser",
 		"email":    "test@example.com",
 		"password": "testpassword",
 	})
