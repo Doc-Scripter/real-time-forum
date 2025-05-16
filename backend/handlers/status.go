@@ -18,7 +18,7 @@ type UserStatus struct {
 func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r)
 
-	rows, err := database.DB.Query("SELECT id, username FROM users WHERE id != ?", userID)
+	rows, err := database.DB.Query("SELECT id, nickname FROM users WHERE id != ?", userID)
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
