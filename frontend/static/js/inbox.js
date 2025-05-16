@@ -404,18 +404,20 @@ async function renderChat(partner, receiverId) {
           data: sanitizedText,
         }),
       });
-
+      const newMessage={
+        sender: currentUser,
+        receiver: receiverId,
+        data: sanitizedText,
+        time: new Date().toLocaleTimeString(),
+      }
       if (response.ok) {
         // Add the sent message to the local messages array
-        messages.push({
-          sender: currentUser,
-          receiver: receiverId,
-          data: sanitizedText,
-          time: new Date().toLocaleTimeString(),
-        });
+        messages.push(newMessage);
 
         // Re-render the chat to show the new message
-        renderChat(partner, receiverId);
+        // renderChat(partner, receiverId);
+
+        appendNewMessage(newMessage)
       } else {
         console.error("Failed to save message");
       }
@@ -512,7 +514,8 @@ function initWebSocket() {
               message.receiver === currentPartner)
           ) {
             // Re-render the chat with updated messages
-            renderChat(currentPartner, currentReceiverId);
+            // renderChat(currentPartner, currentReceiverId);
+            appendNewMessage(currentPartner, currentReceiverId)
           }else{
 
             checkUnreadMessages();
@@ -528,6 +531,28 @@ function initWebSocket() {
     console.log("WebSocket disconnected, retrying...");
     setTimeout(initWebSocket, 2000); // Reconnect
   };
+}
+
+function appendNewMessage(message) {
+  const messagesContainer = document.querySelector(".chat-messages");
+  if (!messagesContainer) return;
+  
+  // Create message element
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `chat-msg ${message.sender === currentUser ? "sent" : "received"}`;
+  
+  messageDiv.innerHTML = `
+    <div class="msg-content">
+      <span class="msg-text">${sanitizeHTML(message.data)}</span>
+      <span class="msg-time">${message.time}</span>
+    </div>
+  `;
+  
+  // Append to container
+  messagesContainer.appendChild(messageDiv);
+  
+  // Scroll to bottom to show new message
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Send message via WebSocket
