@@ -3,11 +3,11 @@ let isLoading = false;
 let hasMorePosts = true;
 let currentCategory = '';
 let currentFilter = '';
-let fetchPostURL = '/api/posts';
+let fetchPostURL = 'api/protected/api/posts';
 
 async function loadFilterCategories() {
     try {
-        const response = await fetch('/api/categories');
+        const response = await fetch('api/protected/api/categories');
         const categories = await response.json();
         const container = document.getElementById('categoryFilter');
         
@@ -67,7 +67,7 @@ async function loadFilterCategories() {
 
 async function loadPostCategories() {
     try {
-        const response = await fetch('/api/categories');
+        const response = await fetch('api/protected/api/categories');
         const categories = await response.json();
         const container = document.getElementById('postCategories');
         
@@ -488,6 +488,6 @@ function applyCategoryFilter(categoryId) {
     currentFilter = '';
     currentPage = 1;
     hasMorePosts = true;
-    fetchPostURL = 'api/posts';
+    fetchPostURL = 'api/protected/api/posts';
     fetchPosts(false);
 }
