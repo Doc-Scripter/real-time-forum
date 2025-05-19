@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"fmt"
 	"forum/database"
 	"forum/middleware"
 	"forum/utils"
+	"forum/logging"
 )
 
 func UnreadHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,9 +47,9 @@ func getUnreadCount(userID int) (int, error) {
     `
 	var count int
     err := database.DB.QueryRow(query, userID).Scan(&count)
-    fmt.Printf("DEBUG: Unread count for user %d: %d\n", userID, count)
+    logging.Log("[DEBUG] Unread count for user %d: %d", userID, count)
     if err != nil {
-        fmt.Printf("DEBUG: Error getting unread count: %v\n", err)
+        logging.Log("[ERROR] Error getting unread count: %v", err)
         return 0, err
     }
     return count, nil

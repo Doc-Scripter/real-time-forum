@@ -54,8 +54,9 @@ async function fetchCurrentUser() {
   try {
     const response = await fetch("/api/protected/api/auth/status");
     const data = await response.json();
+    console.log("INFO : fetched current user:",data)
     if (data.authenticated) {
-      currentUser = data.username;
+      currentUser = data.nickname;
       currentUserId = data.user_id;
     } else {
       currentUser = null;
@@ -603,8 +604,8 @@ if (inboxBtn && mainContent) {
 }
 
 // Expose function globally for status.js and conversation items
-window.openInboxWithUser = function (username, receiverId) {
-  renderChat(username, receiverId);
+window.openInboxWithUser = function (nickname, receiverId) {
+  renderChat(nickname, receiverId);
 };
 
 // On page load, fetch user info and initialize WebSocket

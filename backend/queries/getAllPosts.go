@@ -21,7 +21,7 @@ func GetAllPosts(offset int, category, filter string, userID int) ([]models.Post
 		categoryID := category[9:]
 		query = `
 			SELECT DISTINCT
-				p.id, p.user_id, u.username, p.title, p.content, p.created_at,
+				p.id, p.user_id, u.nickname, p.title, p.content, p.created_at,
 				(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 1) as likes,
 				(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 0) as dislikes
 			FROM posts p
@@ -36,7 +36,7 @@ func GetAllPosts(offset int, category, filter string, userID int) ([]models.Post
 		case "my-posts":
 			query = `
 				SELECT DISTINCT
-					p.id, p.user_id, u.username, p.title, p.content, p.created_at,
+					p.id, p.user_id, u.nickname, p.title, p.content, p.created_at,
 					(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 1) as likes,
 					(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 0) as dislikes
 				FROM posts p
@@ -49,7 +49,7 @@ func GetAllPosts(offset int, category, filter string, userID int) ([]models.Post
 		case "liked-posts":
 			query = `
 				SELECT DISTINCT
-					p.id, p.user_id, u.username, p.title, p.content, p.created_at,
+					p.id, p.user_id, u.nickname, p.title, p.content, p.created_at,
 					(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 1) as likes,
 					(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 0) as dislikes
 				FROM posts p
@@ -63,7 +63,7 @@ func GetAllPosts(offset int, category, filter string, userID int) ([]models.Post
 		default:
 			query = `
 				SELECT DISTINCT
-					p.id, p.user_id, u.username, p.title, p.content, p.created_at,
+					p.id, p.user_id, u.nickname, p.title, p.content, p.created_at,
 					(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 1) as likes,
 					(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 0) as dislikes
 				FROM posts p
@@ -86,7 +86,7 @@ func GetAllPosts(offset int, category, filter string, userID int) ([]models.Post
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
-			&post.Username,
+			&post.Nickname,
 			&post.Title,
 			&post.Content,
 			&post.CreatedAt,

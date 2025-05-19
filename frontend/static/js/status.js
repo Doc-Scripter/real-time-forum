@@ -21,9 +21,9 @@ async function fetchAndDisplayOnlineUsers() {
                     `<div class="online-user" 
                          style="cursor:pointer;" 
                          data-receiver-id="${user.receiver}" 
-                         onclick="openInboxWithUser('${user.username}',${user.receiver})">
+                         onclick="openInboxWithUser('${user.nickname}',${user.receiver})">
                         <span class="status-dot ${user.online ? 'online' : 'offline'}"></span>
-                        <span class="receiver">${user.username}</span>
+                        <span class="receiver">${user.nickname}</span>
                     </div>
                 `).join('')}
             </div>

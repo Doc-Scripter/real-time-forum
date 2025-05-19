@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"html"
 	"net/http"
 	"strconv"
@@ -94,6 +95,7 @@ func GetSinglePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post, err := queries.GetPostByID(id)
 	if err != nil {
+		fmt.Println(err)
 		utils.ErrorMessage(w, "Failed to fetch post", http.StatusInternalServerError)
 		return
 	}

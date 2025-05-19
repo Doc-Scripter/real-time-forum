@@ -1,22 +1,29 @@
 package main
 
 import (
-	"log"
+	//"log"
 	"net/http"
 
 	"forum/database"
 	"forum/handlers"
+	"forum/logging"
 	"forum/middleware"
 )
 
 func main() {
+	// Initialize logger
+	logging.InitializeLogger()
+
 	// Initialize database
 	if err := database.InitDB(); err != nil {
-		log.Fatalf("Database initialization failed: %v", err)
+		logging.TerminalLog("Database initialization failed: %v", err)
+		return
 	}
 
-	// API routes - Public
-	mux:=http.NewServeMux()
+	// Create main mux
+	mux := http.NewServeMux()
+
+	// Register public routes
 	mux.HandleFunc("/static/", handlers.Static)
 	mux.HandleFunc("/", handlers.Index)
 	mux.HandleFunc("/api/login", handlers.LoginHandler)
@@ -25,11 +32,9 @@ func main() {
 	mux.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
 	mux.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
 	mux.HandleFunc("/api/messaging", handlers.MessageWebSocketHandler)
-	
-	
-	// API routes - Protected
+
+	// Create protected mux
 	protectedMux := http.NewServeMux()
-	// protectedMux.HandleFunc("/api/CurrentUser", handlers.CurrentUserHandler)
 	protectedMux.HandleFunc("/api/messages", handlers.MessageHandler)
 	protectedMux.HandleFunc("/api/unread", handlers.UnreadHandler)
 	protectedMux.HandleFunc("/api/status", handlers.GetForumStatusHandler)
@@ -41,13 +46,16 @@ func main() {
 	protectedMux.HandleFunc("/api/likes", handlers.CreatePostLikeDislikeHandler)
 	protectedMux.HandleFunc("/api/comments/like", handlers.CreateCommentLikeHandler)
 
-	// Registering routes
+	// Register protected routes
 	mux.Handle("/api/protected/", middleware.AuthMiddleware(http.StripPrefix("/api/protected", protectedMux)))
 
-	// Applying CORS middleware to all API routes
-	handler:= middleware.CorsMiddleware(mux)
+	// Apply CORS middleware
+	handler := middleware.CorsMiddleware(mux)
 
 	// Start server
-	log.Println("Server started on http://localhost:9111")
-	log.Fatal(http.ListenAndServe(":9111", handler))
+	logging.TerminalLog("Server started on http://localhost:9111")
+	if err := http.ListenAndServe(":9111", handler); err != nil {
+		logging.TerminalLog("Server failed to start: %v", err)
+		return
+	}
 }

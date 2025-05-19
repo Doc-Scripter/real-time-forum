@@ -11,14 +11,14 @@ import (
 
 type UserStatus struct {
 	Receiver int    `json:"receiver"`
-	Username string `json:"username"`
+	Nickname string `json:"nickname"`
 	Online   bool   `json:"online"`
 }
 
 func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r)
 
-	rows, err := database.DB.Query("SELECT id, username FROM users WHERE id != ?", userID)
+	rows, err := database.DB.Query("SELECT id, nickname FROM users WHERE id != ?", userID)
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
@@ -28,8 +28,8 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 	var users []UserStatus
 	for rows.Next() {
 		var id int
-		var username string
-		if err := rows.Scan(&id, &username); err != nil {
+		var nickname string
+		if err := rows.Scan(&id, &nickname); err != nil {
 			continue
 		}
 
@@ -39,7 +39,7 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 		).Scan(&expiresAt)
 		online := err == nil && expiresAt.After(time.Now())
 
-		users = append(users, UserStatus{Receiver: id, Username: username, Online: online})
+		users = append(users, UserStatus{Receiver: id, Nickname: nickname, Online: online})
 	}
 
 	w.Header().Set("Content-Type", "application/json")

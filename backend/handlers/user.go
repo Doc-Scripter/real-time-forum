@@ -9,15 +9,18 @@ import (
 	"forum/database"
 	"forum/models"
 	"forum/queries"
+	// "forum/logging"
+	"log"
+	"fmt"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"fmt"
 )
 
 // Use models.User instead of defining our ow
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[INFO] Login request received from %s", r.RemoteAddr)
 	if r.Method != http.MethodPost {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
@@ -34,6 +37,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
+		log.Printf("[ERROR] Failed to decode login credentials: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -61,8 +65,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify the password
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
-	if err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password)); err != nil {
+		log.Printf("[ERROR] Invalid password for user: %s", user.Nickname)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -74,6 +78,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Delete any existing sessions for this user
 	err = queries.DeleteUserSessions(user.ID)
 	if err != nil {
+		log.Printf("[ERROR] Failed to delete user sessions: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -90,6 +95,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = database.DB.Exec("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
 		sessionToken, user.ID, expiresAt)
 	if err != nil {
+		log.Printf("[ERROR] Failed to create session: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -154,6 +160,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[INFO] Registration request received from %s", r.RemoteAddr)
 	if r.Method != http.MethodPost {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
@@ -166,10 +173,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
+		log.Printf("[ERROR] Failed to decode registration request: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
-			"message": fmt.Sprintf("Error decoding request body: %v", err),
+			"message": "Invalid request payload",
 		})
 		return
 	}
@@ -187,10 +195,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate email format
 	if !isValidEmail(user.Email) {
+		log.Printf("[ERROR] Invalid email format: %s", user.Email)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
-			"message": "Invalid email format: must contain '@' and '.'",
+			"message": "Invalid email format",
 		})
 		return
 	}
