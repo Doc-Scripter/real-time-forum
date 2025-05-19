@@ -81,9 +81,11 @@ func SaveMessageToDB(senderID, receiverID int, text string) error {
 	)
 	return err
 }
+
+// getMessages retrieves all messages between two users, ordered by creation time.
 func getMessages(loggedInUserID, otherUserID int) ([]Message, error) {
 	rows, err := database.DB.Query(
-		`SELECT m.message, u.nickname AS sender_username, m.receiver_id, m.created_at
+		`SELECT m.message, u.nickname AS  	, m.receiver_id, m.created_at
 		 FROM messages m
 		 JOIN users u ON m.user_id = u.id
 		 WHERE (m.user_id = ? AND m.receiver_id = ?) OR (m.user_id = ? AND m.receiver_id = ?)
