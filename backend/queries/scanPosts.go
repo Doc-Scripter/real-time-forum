@@ -15,7 +15,7 @@ func scanPosts(rows *sql.Rows) ([]models.Post, error) {
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
-			&post.Username,
+			&post.Nickname,
 			&post.Title,
 			&post.Content,
 			&post.CreatedAt,
