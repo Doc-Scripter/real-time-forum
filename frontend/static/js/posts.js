@@ -113,7 +113,7 @@ function createPostElement(post) {
     postDiv.innerHTML = `
         <div class="post-header">
             <h3>${post.title}</h3>
-            <small class="post-meta-info">Posted by ${post.username} on ${new Date(post.created_at).toLocaleString()}</small>
+            <small class="post-meta-info">Posted by ${post.nickname} on ${new Date(post.created_at).toLocaleString()}</small>
         </div>
         <div class="post-content">
             <p>${truncatedContent}</p>
