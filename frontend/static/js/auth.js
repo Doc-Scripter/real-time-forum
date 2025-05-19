@@ -22,6 +22,7 @@ async function checkAuth() {
                 <button onclick="openAuthModal('register')" class="auth-btn">Register</button>
             `;
             userFilters.style.display = 'none';
+            openAuthModal('login');
         }
     } catch (error) {
         console.error('Error checking auth status:', error);
@@ -34,6 +35,8 @@ async function checkAuth() {
         document.getElementById('userFilters').style.display = 'none';
     }
 }
+
+setInterval(checkAuth, 1000);
 
 function validateForm() {
     const messageDiv = document.getElementById('authMessage');
@@ -262,6 +265,7 @@ async function logout() {
                 handleError("Invalid request method");
                 return;
             }
+            console.log("Logout failed: ", response.statusText);
             throw new Error('Logout failed');
         }
 
