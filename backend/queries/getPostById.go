@@ -8,7 +8,7 @@ import (
 func GetPostByID(postID int) (models.Post, error) {
 	query := `
 		SELECT 
-			p.id, p.user_id, u.username, p.title, p.content, p.created_at,
+			p.id, p.user_id, u.nickname, p.title, p.content, p.created_at,
 			(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 1) as likes,
 			(SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = 0) as dislikes
 		FROM posts p
@@ -19,7 +19,7 @@ func GetPostByID(postID int) (models.Post, error) {
 	err := database.DB.QueryRow(query, postID).Scan(
 		&post.ID,
 		&post.UserID,
-		&post.Username,
+		&post.Nickname,
 		&post.Title,
 		&post.Content,
 		&post.CreatedAt,
