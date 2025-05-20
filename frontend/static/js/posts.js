@@ -459,7 +459,7 @@ async function submitComment(postId) {
 
 async function updatePost(postId) {
     try {
-        const response = await fetch(`/api/posts/${postId}`);
+        const response = await fetch(`api/protected/api/posts/${postId}`);
         if (!response.ok) {
             throw new Error('Failed to fetch updated post');
         }
