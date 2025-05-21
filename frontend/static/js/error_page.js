@@ -1,4 +1,4 @@
- function showErrorPage(errorData) {
+function showErrorPage(errorData) {
     // const error_page = document.querySelector("body");
     document.open();
     document.writeln(`<!DOCTYPE html>
@@ -117,18 +117,13 @@ window.fetch = async function(...args) {
         500: {Code: 500, Title: "Internal Server Error", Description: "Something went wrong on our end. Please try again later."},
     }
     const response = await originalFetch(...args);
-
-    if (response.status === 404) {
+    if (response.headers.get('X-Status-Code') === '404') {
 
         let error =errorData[404];
         showErrorPage(error);
         throw new Error('Page not found');
     }
-    // if (response.status === 401) {
-    //     let error =errorData[401];
-    //     showErrorPage(error);
-    //     throw new Error('Unauthorized');
-    // }
+   
   
     if (response.status === 403) {
         let error =errorData[403];
@@ -140,10 +135,17 @@ window.fetch = async function(...args) {
         showErrorPage(error);
         throw new Error('Bad Request');
     }
-
+    console.log("code status",response.status)
+    // }
     return response;
 };
 
-// window.onerror = function(message, source, lineno, colno, error) {
-//     error_page(error, 500); 
-// };
+if (window.location.pathname !== "/" && !window.location.pathname.startsWith("/static/")) {
+    // Check if this is a valid route by making a HEAD request
+    fetch(window.location.pathname, { method: 'HEAD' })
+        .catch(error => {
+            // The catch will be triggered by our intercepted fetch above if it's a 404
+            console.log("Route not found, error page already shown: ",error);
+        });
+}
+
