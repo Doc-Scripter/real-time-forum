@@ -17,7 +17,10 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		serveTemplate(w, r, "index.html")
 		return
 	}
-	utils.ErrorMessage(w, "404 Not Found", http.StatusNotFound)
+	w.WriteHeader(http.StatusNotFound)
+	serveTemplate(w, r, "index.html")
+
+	// utils.ErrorMessage(w, "404 Not Found", http.StatusNotFound)
 	// utils.RenderErrorPage(w, http.StatusNotFound)
 }
 
