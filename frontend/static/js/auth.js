@@ -36,7 +36,7 @@ async function checkAuth() {
     }
 }
 
-setInterval(checkAuth, 1000);
+// setInterval(checkAuth, 1000);
 
 function validateForm() {
     const messageDiv = document.getElementById('authMessage');
@@ -171,7 +171,7 @@ function startAuthStatusCheck() {
             if (!response.ok) {
                 // If logged out
                 handleError('Your session has ended. Please login again.');
-                window.location.href = '/login';
+                window.location.href = '/';
             }
         } catch (error) {
             console.error('Auth check failed:', error);
@@ -229,6 +229,7 @@ async function handleAuth(event) {
             showAuthSuccess('Login successful');
             setTimeout(() => {
                 window.location.reload();
+                startAuthStatusCheck();
             }, 1000);
         } else {
             // Registration success
