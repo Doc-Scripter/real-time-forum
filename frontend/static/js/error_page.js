@@ -1,12 +1,12 @@
- function showErrorPage(errorData) {
-    // const error_page = document.querySelector("body");
-    document.open();
-    document.write(`<!DOCTYPE html>
+function showErrorPage(errorData) {
+  // const error_page = document.querySelector("body");
+  document.open();
+  document.writeln(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>errorData.Title - Forum</title>
+    <title>${errorData.Title} - Forum</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -90,9 +90,9 @@
     <main>
         <div class="error-container">
             <i class="fas fa-exclamation-circle error-icon"></i>
-            <div class="error-code">errorData.Code</div>
-            <h1 class="error-message">errorData.Title</h1>
-            <p class="error-description">errorData.Description</p>
+            <div class="error-code">${errorData.Code}</div>
+            <h1 class="error-message">${errorData.Title}</h1>
+            <p class="error-description">${errorData.Description}</p>
             <a href="/" class="home-button">
                 <i class="fas fa-home"></i>
                 Return to Home
@@ -100,53 +100,96 @@
         </div>
     </main>
 </body>
-</html> `)
-document.close()
-    
+</html> `);
+  document.close();
 }
-
 
 // Intercept all fetch requests
 const originalFetch = window.fetch;
-window.fetch = async function(...args) {
-    const errorData={
-        400: {Code: 400, Title: "Bad Request", Description: "The server cannot process your request due to invalid syntax."},
-        401: {Code: 401, Title: "Unauthorized", Description: "You need to be logged in to access this resource."},
-        403: {Code: 403, Title: "Forbidden", Description: "You don't have permission to access this resource."},
-        404: {Code: 404, Title: "Page Not Found", Description: "The page you're looking for doesn't exist or has been moved."},
-        500: {Code: 500, Title: "Internal Server Error", Description: "Something went wrong on our end. Please try again later."},
-    }
+window.fetch = async function (...args) {
+  const errorData = {
+    400: {
+      Code: 400,
+      Title: "Bad Request",
+      Description:
+        "The server cannot process your request due to invalid syntax.",
+    },
+    401: {
+      Code: 401,
+      Title: "Unauthorized",
+      Description: "You need to be logged in to access this resource.",
+    },
+    403: {
+      Code: 403,
+      Title: "Forbidden",
+      Description: "You don't have permission to access this resource.",
+    },
+    405: {
+      Code: 405,
+      Title: "Page Not Found",
+      Description:
+        "The page you're looking for doesn't exist or has been moved.",
+    },
+    500: {
+      Code: 500,
+      Title: "Internal Server Error",
+      Description: "Something went wrong on our end. Please try again later.",
+    },
+  };
+  try {
+   
+    
     const response = await originalFetch(...args);
-    console.log("response: ",response)
 
-    console.log("error found: ",response)
-    if (response.status === 404) {
-    console.log("error found")
+    // if (!response.ok) {
+    //   console.log("Error response:", response);
 
-        let error =errorData[404];
-        showErrorPage(error);
-        throw new Error('Page not found');
-    }
-    if (response.status === 401) {
-        let error =errorData[401];
-        showErrorPage(error);
-        throw new Error('Unauthorized');
-    }
-  
-    if (response.status === 403) {
-        let error =errorData[403];
-        showErrorPage(error);
-        throw new Error('Forbidden');
-    }
-    if (response.status === 400) {
-        let error =errorData[400];
-        showErrorPage(error);
-        throw new Error('Bad Request');
-    }
+      if (response.status === 405) {
+        console.log("error found");
 
+        let error = errorData[405];
+        showErrorPage(error);
+        throw new Error("Page not found");
+      }
+      // if (response.status === 401) {
+      //     let error =errorData[401];
+      //     showErrorPage(error);
+      //     throw new Error('Unauthorized');
+      // }
+
+      if (response.status === 403) {
+        let error = errorData[403];
+        showErrorPage(error);
+        throw new Error("Forbidden");
+      }
+      if (response.status === 400) {
+        let error = errorData[400];
+        showErrorPage(error);
+        throw new Error("Bad Request");
+      }
+    // }
     return response;
+  } catch (error) {
+    console.error("fetch error: ", error);
+    throw error;
+  }
 };
 
+document.addEventListener('DOMContentLoaded', function() {
+    // If the response status is 404, show the error page
+    if (window.location.pathname !== '/' ) {
+      // Make a HEAD request to check if the current URL returns 404
+      fetch(window.location.pathname, { method: 'HEAD' })
+        .then(response => {
+          if (response.status === 404) {
+            showErrorPage(errorData[404]);
+          }
+        })
+        .catch(error => {
+          console.error("Error checking page status:", error);
+        });
+    }
+  });
 // window.onerror = function(message, source, lineno, colno, error) {
-//     error_page(error, 500); 
+//     error_page(error, 500);
 // };
