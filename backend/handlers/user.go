@@ -132,14 +132,31 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Get user ID from context
 	// Extract user ID from the session or request context
-	userID, ok := r.Context().Value("userID").(int)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+	// userID, ok := r.Context().Value("userID").(int)
+	// fmt.Println(userID)
+
+	// if !ok {
+	// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	// 	return
+	// }
+	cookie, err := r.Cookie("session_token")
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    // Get user ID from session
+    var userID int
+    err = database.DB.QueryRow(`
+        SELECT user_id FROM sessions 
+        WHERE token = ?`, cookie.Value).Scan(&userID)
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
 
 	// Delete all sessions for this user
-	err := queries.DeleteUserSessions(userID)
+	err = queries.DeleteUserSessions(userID)
 	if err != nil {
 		http.Error(w, "Failed to logout", http.StatusInternalServerError)
 		return
