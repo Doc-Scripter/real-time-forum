@@ -478,7 +478,6 @@ function initWebSocket() {
 
   ws.onopen = () => {
     console.log("WebSocket connected");
-    // Optionally authenticate or identify user
     ws.send(JSON.stringify({ type: "auth", user: currentUser }));
   };
 
@@ -488,12 +487,11 @@ function initWebSocket() {
       console.log("Received message:", data);
 
       if (data.type === "message" && data.message) {
-        // Ensure message has all required fields
         const message = {
-          sender: data.message.sender,
-          data: data.message.data,
-          time: data.message.time ,
-          receiver: data.message.receiver,
+          sender: data.message.sender || "",
+          data: data.message.data || "",
+          time: data.message.time || new Date().toLocaleTimeString(),
+          receiver: data.message.receiver || 0,
         };
 
         if (
@@ -504,9 +502,7 @@ function initWebSocket() {
         ) {
           messages.push(message);
           messageCache[currentReceiverId].messages.push(message);
-          // endIndex + 1;
 
-          // Re-render if viewing this conversation
           const currentChat = document.querySelector(".chat-section h2");
           if (
             currentChat &&
@@ -514,9 +510,7 @@ function initWebSocket() {
             (message.sender === currentPartner ||
               message.receiver === currentPartner)
           ) {
-            // Re-render the chat with updated messages
-            // renderChat(currentPartner, currentReceiverId);
-            appendNewMessage(currentPartner, currentReceiverId)
+            appendNewMessage(message)
           }else{
 
             checkUnreadMessages();
