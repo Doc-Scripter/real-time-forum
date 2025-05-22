@@ -22,6 +22,7 @@ async function checkAuth() {
                 <button onclick="openAuthModal('register')" class="auth-btn">Register</button>
             `;
             userFilters.style.display = 'none';
+            openAuthModal('login');
         }
     } catch (error) {
         console.error('Error checking auth status:', error);
@@ -35,12 +36,18 @@ async function checkAuth() {
     }
 }
 
+
 function validateForm() {
     const messageDiv = document.getElementById('authMessage');
     messageDiv.style.display = 'block';
     messageDiv.className = 'auth-message error';
 
     if (isLoginMode) {
+        showAuthSuccess('Login successful');
+        startAuthStatusCheck(); // Start the 30-second interval check
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
         // Login validation
         const loginIdentifier = document.getElementById('loginIdentifier').value.trim();
         const password = document.getElementById('password').value.trim();
@@ -262,6 +269,7 @@ async function logout() {
                 handleError("Invalid request method");
                 return;
             }
+            console.log("Logout failed: ", response.statusText);
             throw new Error('Logout failed');
         }
 

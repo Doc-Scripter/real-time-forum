@@ -2,9 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"html/template"
 	"net/http"
-	"path/filepath"
 )
 
 type ErrorPage struct {
@@ -21,25 +19,6 @@ var ErrorMessages = map[int]ErrorPage{
 	500: {Code: 500, Title: "Internal Server Error", Description: "Something went wrong on our end. Please try again later."},
 }
 
-func RenderErrorPage(w http.ResponseWriter, status int) {
-	errorPage, exists := ErrorMessages[status]
-	if !exists {
-		errorPage = ErrorPage{
-			Code:        status,
-			Title:       "Unexpected Error",
-			Description: "An unexpected error occurred. Please try again later.",
-		}
-	}
-
-	tmpl, err := template.ParseFiles(filepath.Join("../frontend/templates", "error.html"))
-	if err != nil {
-		http.Error(w, "Error template not found", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(status)
-	tmpl.Execute(w, errorPage)
-}
 
 func ErrorMessage(w http.ResponseWriter, msg string, errorCode int) {
 	w.Header().Set("Content-Type", "application/json")

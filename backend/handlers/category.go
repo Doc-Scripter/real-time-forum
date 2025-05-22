@@ -11,7 +11,7 @@ import (
 func GetCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 	categories, err := queries.GetCategories()
 	if err != nil {
-		utils.RenderErrorPage(w, http.StatusInternalServerError)
+		utils.ErrorMessage(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 

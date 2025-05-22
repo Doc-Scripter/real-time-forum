@@ -29,7 +29,8 @@ func serveTemplate(w http.ResponseWriter, r *http.Request, templatePath string) 
 	path := filepath.Join("../frontend/templates", templatePath)
 	_, err := os.Stat(path)
 	if err != nil {
-		utils.RenderErrorPage(w, http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		utils.ErrorMessage(w, "Template not found", http.StatusNotFound)
 		return
 	}
 	http.ServeFile(w, r, path)

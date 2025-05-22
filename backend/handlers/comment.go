@@ -50,7 +50,8 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.RenderErrorPage(w, http.StatusMethodNotAllowed)
+		utils.ErrorMessage(w,"Method Not Found",http.StatusMethodNotAllowed)
+
 		return
 	}
 	userID, ok := middleware.GetUserID(r)
