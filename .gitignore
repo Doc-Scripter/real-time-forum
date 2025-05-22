@@ -9,5 +9,5 @@ forum.db
 backend/queries/test_forum.db
 .qodo
 .trae
-.vscode
 application.log
+.vscode

@@ -1,11 +1,12 @@
 function showErrorPage(errorData) {
-  // const error_page = document.querySelector("body");
-  document.open();
-  document.writeln(`<!DOCTYPE html>
+    // const error_page = document.querySelector("body");
+    document.open();
+    document.writeln(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${errorData.Title} - Forum</title>
     <title>${errorData.Title} - Forum</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -93,6 +94,9 @@ function showErrorPage(errorData) {
             <div class="error-code">${errorData.Code}</div>
             <h1 class="error-message">${errorData.Title}</h1>
             <p class="error-description">${errorData.Description}</p>
+            <div class="error-code">${errorData.Code}</div>
+            <h1 class="error-message">${errorData.Title}</h1>
+            <p class="error-description">${errorData.Description}</p>
             <a href="/" class="home-button">
                 <i class="fas fa-home"></i>
                 Return to Home
@@ -140,56 +144,35 @@ window.fetch = async function (...args) {
    
     
     const response = await originalFetch(...args);
-
-    // if (!response.ok) {
-    //   console.log("Error response:", response);
-
-      if (response.status === 405) {
-        console.log("error found");
+    if (response.headers.get('X-Status-Code') === '404') {
 
         let error = errorData[405];
         showErrorPage(error);
-        throw new Error("Page not found");
-      }
-      // if (response.status === 401) {
-      //     let error =errorData[401];
-      //     showErrorPage(error);
-      //     throw new Error('Unauthorized');
-      // }
-
-      if (response.status === 403) {
-        let error = errorData[403];
+        throw new Error('Page not found');
+    }
+   
+  
+    if (response.status === 403) {
+        let error =errorData[403];
         showErrorPage(error);
         throw new Error("Forbidden");
       }
       if (response.status === 400) {
         let error = errorData[400];
         showErrorPage(error);
-        throw new Error("Bad Request");
-      }
+        throw new Error('Bad Request');
+    }
+    console.log("code status",response.status)
     // }
     return response;
-  } catch (error) {
-    console.error("fetch error: ", error);
-    throw error;
-  }
 };
 
-document.addEventListener('DOMContentLoaded', function() {
-    // If the response status is 404, show the error page
-    if (window.location.pathname !== '/' ) {
-      // Make a HEAD request to check if the current URL returns 404
-      fetch(window.location.pathname, { method: 'HEAD' })
-        .then(response => {
-          if (response.status === 404) {
-            showErrorPage(errorData[404]);
-          }
-        })
+if (window.location.pathname !== "/" && !window.location.pathname.startsWith("/static/")) {
+    // Check if this is a valid route by making a HEAD request
+    fetch(window.location.pathname, { method: 'HEAD' })
         .catch(error => {
-          console.error("Error checking page status:", error);
+            // The catch will be triggered by our intercepted fetch above if it's a 404
+            console.log("Route not found, error page already shown: ",error);
         });
-    }
-  });
-// window.onerror = function(message, source, lineno, colno, error) {
-//     error_page(error, 500);
-// };
+}
+

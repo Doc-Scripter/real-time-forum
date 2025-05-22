@@ -36,7 +36,6 @@ async function checkAuth() {
     }
 }
 
-// setInterval(checkAuth, 1000);
 
 function validateForm() {
     const messageDiv = document.getElementById('authMessage');
@@ -44,6 +43,11 @@ function validateForm() {
     messageDiv.className = 'auth-message error';
 
     if (isLoginMode) {
+        showAuthSuccess('Login successful');
+        startAuthStatusCheck(); // Start the 30-second interval check
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
         // Login validation
         const loginIdentifier = document.getElementById('loginIdentifier').value.trim();
         const password = document.getElementById('password').value.trim();
@@ -258,7 +262,8 @@ async function logout() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include'
         });
 
         if (!response.ok) {
