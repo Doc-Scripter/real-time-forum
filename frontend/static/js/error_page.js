@@ -7,6 +7,7 @@ function showErrorPage(errorData) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${errorData.Title} - Forum</title>
+    <title>${errorData.Title} - Forum</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -93,6 +94,9 @@ function showErrorPage(errorData) {
             <div class="error-code">${errorData.Code}</div>
             <h1 class="error-message">${errorData.Title}</h1>
             <p class="error-description">${errorData.Description}</p>
+            <div class="error-code">${errorData.Code}</div>
+            <h1 class="error-message">${errorData.Title}</h1>
+            <p class="error-description">${errorData.Description}</p>
             <a href="/" class="home-button">
                 <i class="fas fa-home"></i>
                 Return to Home
@@ -100,26 +104,49 @@ function showErrorPage(errorData) {
         </div>
     </main>
 </body>
-</html> `)
-document.close()
-    
+</html> `);
+  document.close();
 }
-
 
 // Intercept all fetch requests
 const originalFetch = window.fetch;
-window.fetch = async function(...args) {
-    const errorData={
-        400: {Code: 400, Title: "Bad Request", Description: "The server cannot process your request due to invalid syntax."},
-        401: {Code: 401, Title: "Unauthorized", Description: "You need to be logged in to access this resource."},
-        403: {Code: 403, Title: "Forbidden", Description: "You don't have permission to access this resource."},
-        404: {Code: 404, Title: "Page Not Found", Description: "The page you're looking for doesn't exist or has been moved."},
-        500: {Code: 500, Title: "Internal Server Error", Description: "Something went wrong on our end. Please try again later."},
-    }
+window.fetch = async function (...args) {
+  const errorData = {
+    400: {
+      Code: 400,
+      Title: "Bad Request",
+      Description:
+        "The server cannot process your request due to invalid syntax.",
+    },
+    401: {
+      Code: 401,
+      Title: "Unauthorized",
+      Description: "You need to be logged in to access this resource.",
+    },
+    403: {
+      Code: 403,
+      Title: "Forbidden",
+      Description: "You don't have permission to access this resource.",
+    },
+    405: {
+      Code: 405,
+      Title: "Page Not Found",
+      Description:
+        "The page you're looking for doesn't exist or has been moved.",
+    },
+    500: {
+      Code: 500,
+      Title: "Internal Server Error",
+      Description: "Something went wrong on our end. Please try again later.",
+    },
+  };
+  try {
+   
+    
     const response = await originalFetch(...args);
     if (response.headers.get('X-Status-Code') === '404') {
 
-        let error =errorData[404];
+        let error = errorData[405];
         showErrorPage(error);
         throw new Error('Page not found');
     }
@@ -128,10 +155,10 @@ window.fetch = async function(...args) {
     if (response.status === 403) {
         let error =errorData[403];
         showErrorPage(error);
-        throw new Error('Forbidden');
-    }
-    if (response.status === 400) {
-        let error =errorData[400];
+        throw new Error("Forbidden");
+      }
+      if (response.status === 400) {
+        let error = errorData[400];
         showErrorPage(error);
         throw new Error('Bad Request');
     }
