@@ -10,3 +10,4 @@ backend/queries/test_forum.db
 .qodo
 .trae
 application.log
+.vscode
