@@ -474,7 +474,7 @@ function sanitizeHTML(str) {
 }
 // Initialize WebSocket connection
 function initWebSocket() {
-  ws = new WebSocket("/api/messaging"); // Adjust URL as needed
+  ws = new WebSocket("api/protected/api/messaging"); // Adjust URL as needed
 
   ws.onopen = () => {
     console.log("WebSocket connected");

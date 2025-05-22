@@ -25,16 +25,16 @@ func main() {
 
 	// Register public routes
 	mux.HandleFunc("/static/", handlers.Static)
-	mux.HandleFunc("/", handlers.Index)
 	mux.HandleFunc("/api/login", handlers.LoginHandler)
 	mux.HandleFunc("/api/register", handlers.RegisterHandler)
-	mux.HandleFunc("/api/posts", handlers.GetPostsHandler)
-	mux.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
-	mux.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
-	mux.HandleFunc("/api/messaging", handlers.MessageWebSocketHandler)
-
+	mux.HandleFunc("/", handlers.Index)
+	
 	// Create protected mux
 	protectedMux := http.NewServeMux()
+	// protectedMux.HandleFunc("/api/posts", handlers.GetPostsHandler)
+	protectedMux.HandleFunc("/api/categories", handlers.GetCategoriesHandler)
+	protectedMux.HandleFunc("/api/posts/", handlers.GetSinglePostHandler)
+	protectedMux.HandleFunc("/api/messaging", handlers.MessageWebSocketHandler)
 	protectedMux.HandleFunc("/api/messages", handlers.MessageHandler)
 	protectedMux.HandleFunc("/api/unread", handlers.UnreadHandler)
 	protectedMux.HandleFunc("/api/status", handlers.GetForumStatusHandler)
