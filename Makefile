@@ -6,7 +6,7 @@ test:
 format:
 	cd backend && go fmt -w -s .
 clean:
-	rm -rf application.log
+	cd backend/logs && rm -rf application.log
 reset:
 	cd backend && cd data
 	migrate down
