@@ -327,6 +327,7 @@ async function renderChat(partner, receiverId) {
         <div class="chat-section">
             <button id="back-to-inbox" class="back-btn">← Back to Inbox</button>
             <h2>Chat with ${partner}</h2>
+            <button id="load-more-btn" class="load-more-btn">Load Previous Messages</button>
             <div class="chat-messages">
                 ${
                   chatMessages.length === 0
@@ -338,6 +339,9 @@ async function renderChat(partner, receiverId) {
                       msg.sender === currentUser ? "sent" : "received"
                     }">
                         <div class="msg-content">
+                            <span class="msg-sender">From: ${msg.sender === currentUser ? currentUser : msg.sender}</span>
+                            <span class="msg-receiver">To: ${msg.receiver === currentUser ? currentUser : partner}</span>
+                          
                             <span class="msg-text">${msg.data}</span>
                             <span class="msg-time">${msg.time}</span>
                         </div>
@@ -364,7 +368,10 @@ async function renderChat(partner, receiverId) {
   }
 
   document.getElementById("back-to-inbox").onclick = () => renderInbox();
-
+  const loadMoreBtn = document.getElementById("load-more-btn");
+  if (loadMoreBtn) {
+    loadMoreBtn.onclick = () => loadMoreMessages(receiverId);
+  }
   document.getElementById("send-msg-form").onsubmit = async (e) => {
     // endIndex + 1;
     e.preventDefault();
@@ -452,6 +459,7 @@ function loadMoreMessages(receiverId) {
         (msg) => `
       <div class="chat-msg ${msg.sender === currentUser ? "sent" : "received"}">
         <div class="msg-content">
+        <span class="msg-sender">${msg.sender === currentUser ? currentUser : msg.sender}</span>
           <span class="msg-text">${msg.data}</span>
           <span class="msg-time">${msg.time}</span>
         </div>
@@ -538,6 +546,7 @@ function appendNewMessage(message) {
   
   messageDiv.innerHTML = `
     <div class="msg-content">
+    <span class="msg-sender">${message.sender === currentUser ? currentUser : message.sender}</span>
       <span class="msg-text">${sanitizeHTML(message.data)}</span>
       <span class="msg-time">${message.time}</span>
     </div>
