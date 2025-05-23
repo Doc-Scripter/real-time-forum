@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"forum/database"
+	"forum/logging"
 	"forum/middleware"
 	"forum/utils"
 	"time"
@@ -53,6 +54,7 @@ func handleMessages() {
 			}
 			err := client.WriteJSON(envelope)
 			if err != nil {
+				logging.Log("[ERROR] Error sending message to client: %v", err)
 				client.Close()
 				delete(clients, client)
 			}
@@ -68,7 +70,7 @@ func MarkMessagesAsRead(receiverID, senderID int) error {
     `
     _, err := database.DB.Exec(query, receiverID, senderID)
     if err != nil {
-        fmt.Printf("Error marking messages as read: %v\n", err)
+		logging.Log("Error marking messages as read: %v", err)
         return err
     }
     return nil
@@ -182,17 +184,19 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
             SenderID int `json:"senderId"`
         }
         if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logging.Log("Error decoding request body: %v", err)
             utils.ErrorMessage(w, "Invalid request", http.StatusBadRequest)
             return
         }
         
-        userID, ok := middleware.GetUserID(r)
+        userID, ok = middleware.GetUserID(r)
         if !ok {
             utils.ErrorMessage(w, "Unauthorized", http.StatusUnauthorized)
             return
         }
 
         if err := MarkMessagesAsRead(userID, req.SenderID); err != nil {
+			logging.Log("Error marking messages as read: %v", err)
             utils.ErrorMessage(w, "Failed to mark messages as read", http.StatusInternalServerError)
             return
         }
@@ -210,7 +214,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		receiverID, err := strconv.Atoi(receiverIDStr)
 		if err != nil {
-			fmt.Println(err)
+			logging.Log("Error parsing receiver ID: %v", err)
 			utils.ErrorMessage(w, "error parsing the receiverid", http.StatusBadRequest)
 			return
 		}
@@ -218,7 +222,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		// Get messages between these two users
 		msgs, err := getMessages(userID, receiverID)
 		if err != nil {
-			fmt.Println(err)
+			logging.Log("Error getting messages: %v", err)
 			utils.ErrorMessage(w, "Failed to fetch messages", http.StatusInternalServerError)
 			return
 		}
@@ -229,7 +233,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}else{
 		msgs, err := getLastMessages(userID)
 		if err != nil {
-			fmt.Println(err)
+			logging.Log("Error getting messages: %v", err)
 			utils.ErrorMessage(w, "Failed to fetch messages", http.StatusInternalServerError)
 			return
 		}
@@ -242,6 +246,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var msg Message
 		if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+			logging.Log("Error decoding message: %v", err)
 			utils.ErrorMessage(w, "Invalid Request", http.StatusBadRequest)
 			return
 		}
@@ -251,7 +256,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := SaveMessageToDB(senderID, msg.Receiver, msg.Data); err != nil {
-			fmt.Println(err)
+			logging.Log("Error saving message to DB: %v", err)
 			utils.ErrorMessage(w, "Failed to save message", http.StatusInternalServerError)
 			return
 		}
@@ -266,6 +271,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		logging.Log("Error upgrading to WebSocket: %v", err)
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
 		return
 	}
@@ -278,7 +284,7 @@ func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			fmt.Println("WebSocket read error:", err)
+			logging.Log("Error reading message: %v", err)
 			break
 		}
 		if msg.Time == "" {

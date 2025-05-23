@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 // Statetement to create tables using sqlite
 var TableCreationStatements = []string{
 	`CREATE TABLE IF NOT EXISTS users (
@@ -94,7 +96,7 @@ func CreateTables(statements []string) (err error) {
 	for _, statement := range statements {
 		_, err = DB.Exec(statement)
 		if err != nil {
-			return
+			return fmt.Errorf("error creating table: %v", err)
 		}
 	}
 	return

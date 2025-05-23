@@ -21,7 +21,6 @@ func CreateLikeDislike(like models.LikeDislike) error {
 			"INSERT INTO likes (user_id, post_id, is_like) VALUES (?, ?, ?)",
 			like.UserID, like.PostID, like.IsLike,
 		)
-		return err
 	}
 
 	if err != nil {

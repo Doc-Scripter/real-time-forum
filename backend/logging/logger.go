@@ -42,7 +42,7 @@ var logger *log.Logger
 var terminalLogger *log.Logger
 
 // Log writes to file only
-func Log(format string, v ...interface{}) {
+func Log(format string, v ...any) {
 	logger.Printf(format, v...)
 }
 

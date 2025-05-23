@@ -3,15 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 	"strings"
+	"time"
 
 	"forum/database"
+	"forum/logging"
 	"forum/models"
 	"forum/queries"
+
 	// "forum/logging"
-	"log"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -37,7 +39,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
-		log.Printf("[ERROR] Failed to decode login credentials: %v", err)
+		logging.Log("[ERROR] Failed to decode login credentials: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -56,6 +58,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Scan(&user.ID, &user.Nickname, &user.Age, &user.Gender, &user.FirstName, &user.LastName, &user.Email, &user.Password)
 	
 	if err != nil {
+		logging.Log("[WARNING] User not found: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -65,8 +68,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify the password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password)); err != nil {
-		log.Printf("[ERROR] Invalid password for user: %s", user.Nickname)
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password)); err != nil {
+		logging.Log("[WARNING] Invalid password for user: %s", user.Nickname)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -78,7 +81,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Delete any existing sessions for this user
 	err = queries.DeleteUserSessions(user.ID)
 	if err != nil {
-		log.Printf("[ERROR] Failed to delete user sessions: %v", err)
+		logging.Log("[ERROR] Failed to delete user sessions: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -95,7 +98,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = database.DB.Exec("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
 		sessionToken, user.ID, expiresAt)
 	if err != nil {
-		log.Printf("[ERROR] Failed to create session: %v", err)
+		logging.Log("[ERROR] Failed to create session: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -130,17 +133,10 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// Get user ID from context
-	// Extract user ID from the session or request context
-	// userID, ok := r.Context().Value("userID").(int)
-	// fmt.Println(userID)
 
-	// if !ok {
-	// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	// 	return
-	// }
 	cookie, err := r.Cookie("session_token")
     if err != nil {
+		logging.Log("[WARNING] Failed to get session token: %v", err)
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
@@ -151,6 +147,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
         SELECT user_id FROM sessions 
         WHERE token = ?`, cookie.Value).Scan(&userID)
     if err != nil {
+		logging.Log("[ERROR] Failed to get user ID from session: %v", err)
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
@@ -158,6 +155,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Delete all sessions for this user
 	err = queries.DeleteUserSessions(userID)
 	if err != nil {
+		logging.Log("[ERROR] Failed to delete user sessions: %v", err)
 		http.Error(w, "Failed to logout", http.StatusInternalServerError)
 		return
 	}
@@ -190,7 +188,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		log.Printf("[ERROR] Failed to decode registration request: %v", err)
+		logging.Log("[ERROR] Failed to decode registration request: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -227,6 +225,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		SELECT EXISTS(SELECT 1 FROM users WHERE nickname = ? OR email = ?)
 	`, user.Nickname, user.Email).Scan(&exists)
 	if err != nil {
+		logging.Log("[ERROR] Database error checking username/email: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -246,6 +245,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
+		logging.Log("[ERROR] Error hashing password: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",
@@ -261,6 +261,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// Create user using the CreateUser function
 	userID, err := queries.CreateUser(user)
 	if err != nil {
+		logging.Log("[ERROR] Failed to create user: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"success": "false",

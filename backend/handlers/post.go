@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"html"
 	"net/http"
 	"strconv"
 
+	"forum/logging"
 	"forum/middleware"
 	"forum/models"
 	"forum/queries"
@@ -29,6 +29,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	postData.UserID = userId
 
 	if err := ParseJSONBody(r.Body, &postData); err != nil {
+		logging.Log("Error parsing JSON body: %v", err)
 		utils.ErrorMessage(w, "Sorry! We didnt get those post details. Try again.", http.StatusInternalServerError)
 		return
 	}
@@ -42,6 +43,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := queries.CreatePost(postData); err != nil {
+		logging.Log("Error creating post: %v", err)
 		utils.ErrorMessage(w, "Ooops! We couldn't get your post. Try again...", http.StatusInternalServerError)
 		return
 	}
@@ -66,6 +68,8 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 	if page != "" {
 		if num, err := strconv.Atoi(page); err == nil {
 			pageNum = num
+		} else {
+			logging.Log("Error converting page number to integer: %v", err)
 		}
 	}
 
@@ -73,6 +77,7 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r)
 	posts, err := queries.GetAllPosts(offset, category, filter, userID)
 	if err != nil {
+		logging.Log("Error fetching posts: %v", err)
 		utils.ErrorMessage(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
 	}
@@ -89,13 +94,14 @@ func GetSinglePostHandler(w http.ResponseWriter, r *http.Request) {
 	postID := r.URL.Path[len("/api/posts/"):]
 	id, err := strconv.Atoi(postID)
 	if err != nil {
+		logging.Log("Error converting post ID to integer: %v", err)
 		utils.ErrorMessage(w, "Invalid post ID", http.StatusBadRequest)
 		return
 	}
 
 	post, err := queries.GetPostByID(id)
 	if err != nil {
-		fmt.Println(err)
+		logging.Log("Error fetching post: %v", err)
 		utils.ErrorMessage(w, "Failed to fetch post", http.StatusInternalServerError)
 		return
 	}

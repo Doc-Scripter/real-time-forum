@@ -15,7 +15,7 @@ var DB *sql.DB
 func InitDB() (err error) {
 	// Create database directory if it doesn't exist
 	dbDir := "./data"
-	if err := os.MkdirAll(dbDir, 0755); err != nil {
+	if err = os.MkdirAll(dbDir, 0755); err != nil {
 		return fmt.Errorf("failed to create database directory: %v", err)
 	}
 
@@ -27,7 +27,7 @@ func InitDB() (err error) {
 	// Create tables
 	err = CreateTables(TableCreationStatements)
 	if err != nil {
-		return
+		return fmt.Errorf("error creating tables: %v", err)
 	}
 	log.Println("Database initialized successfully")
 	return

@@ -22,7 +22,6 @@ func CreateCommentLikeDislike(like models.LikeDislike) error {
 			"INSERT INTO comment_likes (user_id, comment_id, is_like) VALUES (?, ?, ?)",
 			like.UserID, like.CommentID, map[bool]int{true: 1, false: 0}[like.IsLike],
 		)
-		return err
 	}
 
 	if err != nil {

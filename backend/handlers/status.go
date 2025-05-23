@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"forum/database"
+	"forum/logging"
 	"forum/middleware"
 )
 
@@ -20,6 +21,7 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := database.DB.Query("SELECT id, nickname FROM users WHERE id != ?", userID)
 	if err != nil {
+		logging.Log("Error fetching users: %v", err)
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
 	}
@@ -37,7 +39,12 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 		err := database.DB.QueryRow(
 			"SELECT expires_at FROM sessions WHERE user_id = ? ORDER BY expires_at DESC LIMIT 1", id,
 		).Scan(&expiresAt)
-		online := err == nil && expiresAt.After(time.Now())
+		if err != nil  {
+			logging.Log("[ERROR] :Error checking user status: %v", err)
+			http.Error(w, "Failed to check user status", http.StatusInternalServerError)
+			return
+		}
+		online := expiresAt.After(time.Now())
 
 		users = append(users, UserStatus{Receiver: id, Nickname: nickname, Online: online})
 	}
