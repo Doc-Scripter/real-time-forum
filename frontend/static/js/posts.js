@@ -261,13 +261,36 @@ function showPostError(message) {
     errorDiv.style.display = 'block';
 }
 
-// Modify the createPost function to include validation
+// Validate post form
+function validatePostForm() {
+    const title = document.getElementById('postTitle').value.trim();
+    const content = document.getElementById('postContent').value.trim();
+    const errorDiv = document.getElementById('post-error-message');
+
+    if (!title) {
+        showPostError('Please enter a post title');
+        return false;
+    }
+
+    if (!content) {
+        showPostError('Please enter post content');
+        return false;
+    }
+
+    errorDiv.style.display = 'none';
+    return true;
+}
+
+// Modified create post handler with validation
 async function handleCreatePost(event) {
     event.preventDefault();
     
+    if (!validatePostForm()) {
+        return;
+    }
+
     const title = document.getElementById('postTitle').value;
     const content = document.getElementById('postContent').value;
-    
     const selectedCategories = Array.from(document.querySelectorAll('#postCategories input:checked')).map(input => parseInt(input.value));
 
     try {
@@ -278,19 +301,17 @@ async function handleCreatePost(event) {
             },
             body: JSON.stringify({ title, content, raw_categories: selectedCategories })
         });
+
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to create post');
         }
+
         handleSuccess('Post created successfully');
         closeCreatePostModal();
         resetPosts();
     } catch (e) {
-        if (e.message === 'Title and content are required') {
-            showPostError('Title and content are required')
-            return
-        }
-        handleError(e.message)
+        handleError(e.message);
     }
 }
 
