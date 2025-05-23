@@ -109,7 +109,7 @@ func getMessages(loggedInUserID, otherUserID int) ([]Message, error) {
 			return nil, fmt.Errorf("error scanning message row: %v", err)
 		}
 
-		msg.Time = createdAt.Format("15:04:05")
+		msg.Time = createdAt.Format("3:04:05 PM")
 		allMessages = append(allMessages, msg)
 	}
 
@@ -163,7 +163,7 @@ func getLastMessages(userID int) ([]Message, error) {
             return nil, fmt.Errorf("error scanning message row: %v", err)
         }
         
-        msg.Time = createdAt.Format("15:04:05")
+        msg.Time = createdAt.Format("3:04:05 PM")
         msg.Receiver = otherUserID // Set the other user's ID as the receiver
         result = append(result, msg)
     }
