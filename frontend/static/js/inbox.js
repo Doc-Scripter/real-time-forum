@@ -14,6 +14,9 @@ let messagesPerPage = 10; // Number of messages to display per page
 let currPage = 1; // Current page number
 let ws;
 let endIndex = 0;
+let lastLoadMoreCall = 0; // Add this variable near the top with other global variables
+
+
 async function checkUnreadMessages() {
   console.log("DEBUG: Checking unread messages");
   try {
@@ -444,6 +447,13 @@ async function renderChat(partner, receiverId) {
 }
 
 function loadMoreMessages(receiverId) {
+  // Throttle to once per second
+  const now = Date.now();
+  if (now - lastLoadMoreCall < 1000) {
+    return; // Exit early if called within 1 second
+  }
+  lastLoadMoreCall = now;
+  
   const cache = messageCache[receiverId];
   const totalMessages = cache.messages.length;
   const alreadyDisplayed = cache.currPage * messagesPerPage;
