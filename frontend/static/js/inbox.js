@@ -173,6 +173,8 @@ function getConversations() {
 }
 // Render inbox: conversation list or chat view
 async function renderInbox() {
+  initWebSocket();
+
   document.getElementById("toggleRight").style.display = "flex";
   document.getElementById("toggleLeft").style.display = "flex";
   if (!currentUser) {
@@ -612,12 +614,12 @@ if (inboxBtn && mainContent) {
 
 // Expose function globally for status.js and conversation items
 window.openInboxWithUser = function (nickname, receiverId) {
+  initWebSocket();
   renderChat(nickname, receiverId);
 };
 
 // On page load, fetch user info and initialize WebSocket
 window.addEventListener("DOMContentLoaded", async () => {
   await initInbox();
-  initWebSocket();
   startUnreadCheck();
 });
