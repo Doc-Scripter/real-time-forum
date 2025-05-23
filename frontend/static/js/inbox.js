@@ -339,11 +339,11 @@ async function renderChat(partner, receiverId) {
                       msg.sender === currentUser ? "sent" : "received"
                     }">
                         <div class="msg-content">
-                            <span class="msg-sender">From: ${msg.sender === currentUser ? currentUser : msg.sender}</span>
-                            <span class="msg-receiver">To: ${msg.receiver === currentUser ? currentUser : partner}</span>
-                          
-                            <span class="msg-text">${msg.data}</span>
+                        <span class="msg-text">${msg.data}</span>
+                        <div class="msg-details">
+                        <span class="msg-sender">${msg.sender === currentUser ? currentUser : msg.sender}</span>
                             <span class="msg-time">${msg.time}</span>
+                        </div>
                         </div>
                     </div>
                 `
@@ -459,10 +459,12 @@ function loadMoreMessages(receiverId) {
         (msg) => `
       <div class="chat-msg ${msg.sender === currentUser ? "sent" : "received"}">
         <div class="msg-content">
+        <span class="msg-text">${sanitizeHTML(msg.data)}</span>
+         <div class="msg-details">
         <span class="msg-sender">${msg.sender === currentUser ? currentUser : msg.sender}</span>
-          <span class="msg-text">${msg.data}</span>
           <span class="msg-time">${msg.time}</span>
-        </div>
+          </div>
+          </div>
       </div>
     `
       )
@@ -546,9 +548,11 @@ function appendNewMessage(message) {
   
   messageDiv.innerHTML = `
     <div class="msg-content">
-    <span class="msg-sender">${message.sender === currentUser ? currentUser : message.sender}</span>
-      <span class="msg-text">${sanitizeHTML(message.data)}</span>
-      <span class="msg-time">${message.time}</span>
+                        <span class="msg-text">${sanitizeHTML(message.data)}</span>
+                        <div class="msg-details">
+                        <span class="msg-sender">${message.sender === currentUser ? currentUser : message.sender}</span>
+                            <span class="msg-time">${message.time}</span>
+                        </div>
     </div>
   `;
   
