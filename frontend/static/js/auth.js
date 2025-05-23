@@ -43,11 +43,6 @@ function validateForm() {
     messageDiv.className = 'auth-message error';
 
     if (isLoginMode) {
-        showAuthSuccess('Login successful');
-        startAuthStatusCheck(); // Start the 30-second interval check
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
         // Login validation
         const loginIdentifier = document.getElementById('loginIdentifier').value.trim();
         const password = document.getElementById('password').value.trim();
@@ -73,8 +68,8 @@ function validateForm() {
         }
 
         // Age validation
-        if (age < 13) {
-            messageDiv.textContent = 'You must be at least 13 years old to register';
+        if (age < 13 || age > 200) {
+            messageDiv.textContent = 'Age must be between 13 and 200 years';
             return false;
         }
 
@@ -186,10 +181,14 @@ function startAuthStatusCheck() {
 // Called after logging in successfully
 async function handleAuth(event) {
     event.preventDefault();
+    event.stopPropagation(); // Prevent event bubbling
 
     if (!validateForm()) {
         return;
     }
+
+    const messageDiv = document.getElementById('authMessage');
+    messageDiv.style.display = 'none'; // Clear any previous messages
 
     const password = document.getElementById('password').value.trim();
     let requestBody;
@@ -208,7 +207,7 @@ async function handleAuth(event) {
             email: document.getElementById('email').value.trim(),
             age: parseInt(document.getElementById('age').value),
             gender: document.getElementById('gender').value,
-            password: password
+            password
         };
     }
 
@@ -224,16 +223,17 @@ async function handleAuth(event) {
         const data = await response.json();
         console.log('Auth response:', data);
 
-        if (!data.success) {
-            throw new Error(data.message || 'Authentication failed');
+        if (!response.ok || !data.success) {
+            showAuthError(data.message || 'Wrong password or invalid credentials');
+            return;
         }
 
         if (isLoginMode) {
             // Login success
             showAuthSuccess('Login successful');
+            startAuthStatusCheck();
             setTimeout(() => {
                 window.location.reload();
-                startAuthStatusCheck();
             }, 1000);
         } else {
             // Registration success
@@ -245,14 +245,7 @@ async function handleAuth(event) {
         }
     } catch (error) {
         console.error('Auth error:', error);
-        // Show more detailed error message
-        if (error.message) {
-            showAuthError(error.message);
-        } else if (error.response) {
-            showAuthError(error.response.statusText || 'An error occurred');
-        } else {
-            showAuthError('An error occurred. Please check the console for details.');
-        }
+        showAuthError('An error occurred. Please try again later.');
     }
 }
 
