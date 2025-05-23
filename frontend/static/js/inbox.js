@@ -10,7 +10,6 @@ let currentReceiverId = null;
 let currentPartner = null;
 let unreadCheckInterval;
 let messageCache = {};
-let isInitialized = true;
 let messagesPerPage = 10; // Number of messages to display per page
 let currPage = 1; // Current page number
 let ws;
@@ -290,17 +289,14 @@ async function renderChat(partner, receiverId) {
     console.error("Messages is not an array", messages);
     messages = [];
   }
+  console.log(messages)
   
-  if (isInitialized) {
+  
     messageCache[receiverId] = {
       messages: messages,
       currPage: 1,
     };
     messages = messages.slice(-10);
-    
-    isInitialized = false;
-  }
-  console.log("DEBUG (info) :\n ", messages.length);
 
   const chatMessages = messages.filter((msg) => {
     if (!msg) return false;
@@ -449,10 +445,15 @@ async function renderChat(partner, receiverId) {
 
 function loadMoreMessages(receiverId) {
   const cache = messageCache[receiverId];
-  if (cache.currPage * messagesPerPage < cache.messages.length) {
+  const totalMessages = cache.messages.length;
+  const alreadyDisplayed = cache.currPage * messagesPerPage;
+  
+  if (alreadyDisplayed < totalMessages) {
     cache.currPage++;
-    const startIndex = (cache.currPage - 1) * messagesPerPage;
-    const endIndex = startIndex + messagesPerPage;
+    
+    // Calculate backwards from the end
+    const endIndex = totalMessages - alreadyDisplayed;
+    const startIndex = Math.max(0, endIndex - messagesPerPage);
     const messagesToPrepend = cache.messages.slice(startIndex, endIndex);
 
     const messagesContainer = document.querySelector(".chat-messages");
@@ -474,7 +475,14 @@ function loadMoreMessages(receiverId) {
 
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = messagesHTML;
+    
+    // Store scroll position to maintain view
+    const currentScrollHeight = messagesContainer.scrollHeight;
     messagesContainer.prepend(...tempDiv.childNodes);
+    
+    // Adjust scroll to maintain position
+    const newScrollHeight = messagesContainer.scrollHeight;
+    messagesContainer.scrollTop = newScrollHeight - currentScrollHeight;
   }
 }
 
