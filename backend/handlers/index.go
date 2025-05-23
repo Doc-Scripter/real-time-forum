@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 
+	"forum/logging"
 	"forum/utils"
 )
 
@@ -30,6 +31,7 @@ func Static(w http.ResponseWriter, r *http.Request) {
 	path := "../frontend" + r.URL.Path
 	f, err := os.Stat(path)
 	if err != nil {
+		logging.Log("[ERROR] %v", err)
 		utils.ErrorMessage(w, "404 Not Found", http.StatusNotFound)
 		return
 	}

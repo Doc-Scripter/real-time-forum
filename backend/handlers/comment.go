@@ -5,6 +5,7 @@ import (
 	"html"
 	"net/http"
 
+	"forum/logging"
 	"forum/middleware"
 	"forum/models"
 	"forum/queries"
@@ -25,6 +26,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	var comment models.Comment
 	if err := ParseJSONBody(r.Body, &comment); err != nil {
+		logging.Log("[ERROR] Error parsing JSON: %v", err)
 		utils.ErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
@@ -63,11 +65,13 @@ func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 	like.UserID = userID
 
 	if err := ParseJSONBody(r.Body, &like); err != nil {
+		logging.Log("[ERROR] Error parsing JSON: %v", err)
 		utils.ErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if err := queries.UpdateCommentLikes(like); err != nil {
+		logging.Log("[ERROR] Error updating comment likes: %v", err)
 		utils.ErrorMessage(w, "Sorry! We couldn't update your reaction. Try again.", http.StatusInternalServerError)
 		return
 	}

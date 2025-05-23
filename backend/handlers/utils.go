@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"forum/logging"
 	"forum/models"
 	"forum/utils"
 )
@@ -29,6 +30,7 @@ func serveTemplate(w http.ResponseWriter, r *http.Request, templatePath string) 
 	path := filepath.Join("../frontend/templates", templatePath)
 	_, err := os.Stat(path)
 	if err != nil {
+		logging.Log("[ERROR] :Error serving template: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		utils.ErrorMessage(w, "Template not found", http.StatusNotFound)
 		return

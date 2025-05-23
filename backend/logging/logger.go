@@ -25,7 +25,7 @@ func InitializeLogger() {
 	}
 
 	// Create a logger that writes to file
-	fileLogger := log.New(logFile, "", log.LstdFlags|log.Lshortfile)
+	fileLogger := log.New(logFile, "", log.LstdFlags)
 
 	// Create a logger that writes to terminal
 	terminalLogger = log.New(os.Stdout, "", log.LstdFlags)
@@ -42,7 +42,7 @@ var logger *log.Logger
 var terminalLogger *log.Logger
 
 // Log writes to file only
-func Log(format string, v ...interface{}) {
+func Log(format string, v ...any) {
 	logger.Printf(format, v...)
 }
 

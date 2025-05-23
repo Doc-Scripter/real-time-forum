@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"fmt"
 	"forum/database"
+	"forum/logging"
 	"forum/middleware"
 	"forum/utils"
-	"forum/logging"
 )
 
 func UnreadHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +21,7 @@ func UnreadHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		unreadCount, err := getUnreadCount(userID)
 		if err != nil {
-			fmt.Println(err)
+			logging.Log("[ERROR] Error getting unread count: %v", err)
 			utils.ErrorMessage(w, "Failed to fetch unread message count", http.StatusInternalServerError)
 			return
 		}
@@ -46,11 +45,10 @@ func getUnreadCount(userID int) (int, error) {
         AND is_read = 0
     `
 	var count int
-    err := database.DB.QueryRow(query, userID).Scan(&count)
-    logging.Log("[DEBUG] Unread count for user %d: %d", userID, count)
-    if err != nil {
-        logging.Log("[ERROR] Error getting unread count: %v", err)
-        return 0, err
-    }
-    return count, nil
+	err := database.DB.QueryRow(query, userID).Scan(&count)
+	if err != nil {
+		logging.Log("[ERROR] Error getting unread count: %v", err)
+		return 0, err
+	}
+	return count, nil
 }
