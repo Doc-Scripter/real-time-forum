@@ -284,7 +284,7 @@ func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			logging.Log("Error reading message: %v", err)
+			logging.Log("[INFO] : reading message: %v", err)
 			break
 		}
 		if msg.Time == "" {
