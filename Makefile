@@ -12,3 +12,5 @@ reset:
 	migrate down
 	migrate up
 	make clean
+push:
+	git push github && git push origin
