@@ -223,25 +223,31 @@ async function handleAuth(event) {
         const data = await response.json();
         console.log('Auth response:', data);
 
-        if (!response.ok || !data.success) {
-            showAuthError(data.message || 'Wrong password or invalid credentials');
-            return;
-        }
-
-        if (isLoginMode) {
-            // Login success
-            showAuthSuccess('Login successful');
-            startAuthStatusCheck();
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+        if (response.ok && data.success) {
+            if (isLoginMode) {
+                // Login success
+                showAuthSuccess('Login successful');
+                startAuthStatusCheck();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Registration success
+                showAuthSuccess('Registration successful! Please login.');
+                setTimeout(() => {
+                    isLoginMode = true;
+                    openAuthModal('login', 'Registration successful! Please login.');
+                }, 1000);
+            }
         } else {
-            // Registration success
-            showAuthSuccess('Registration successful! Please login.');
-            setTimeout(() => {
-                isLoginMode = true;
-                openAuthModal('login', 'Registration successful! Please login.');
-            }, 1000);
+            // Handle login or registration failure
+            if (data.message) {
+                showAuthError(data.message);
+            } else if (isLoginMode) {
+                showAuthError('Invalid credentials. Please check your email/nickname and password.');
+            } else {
+                showAuthError('Registration failed. Please try again.');
+            }
         }
     } catch (error) {
         console.error('Auth error:', error);
