@@ -19,14 +19,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Use models.User instead of defining our ow
-
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] Login request received from %s", r.RemoteAddr)
 	if r.Method != http.MethodPost {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Method not allowed",
 		})
 		return
@@ -41,8 +39,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[ERROR] Failed to decode login credentials: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Invalid request payload",
 		})
 		return
@@ -60,9 +58,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[WARNING] User not found: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
-			"message": "Invalid credentials",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
+			"message": "Invalid email/username or password",
 		})
 		return
 	}
@@ -71,9 +69,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password)); err != nil {
 		logging.Log("[WARNING] Invalid password for user: %s", user.Nickname)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
-			"message": "Invalid credentials",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
+			"message": "Invalid email/username or password",
 		})
 		return
 	}
@@ -83,8 +81,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[ERROR] Failed to delete user sessions: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Failed to manage sessions",
 		})
 		return
@@ -100,8 +98,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[ERROR] Failed to create session: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Failed to create session",
 		})
 		return
@@ -119,7 +117,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": "true",
+		"success": true,  // ← Already correct boolean
 		"message": "Login successful",
 		"user": map[string]interface{}{
 			"nickname": user.Nickname,
@@ -178,8 +176,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] Registration request received from %s", r.RemoteAddr)
 	if r.Method != http.MethodPost {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Method not allowed",
 		})
 		return
@@ -190,8 +188,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[ERROR] Failed to decode registration request: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Invalid request payload",
 		})
 		return
@@ -201,8 +199,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if user.Nickname == "" || user.FirstName == "" || user.LastName == "" || 
 	   user.Email == "" || user.Password == "" || user.Age < 13 {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "All fields are required and age must be at least 13",
 		})
 		return
@@ -212,8 +210,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if !isValidEmail(user.Email) {
 		log.Printf("[ERROR] Invalid email format: %s", user.Email)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Invalid email format",
 		})
 		return
@@ -227,16 +225,16 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[ERROR] Database error checking username/email: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": fmt.Sprintf("Database error checking username/email: %v", err),
 		})
 		return
 	}
 	if exists {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": "Username or email already exists",
 		})
 		return
@@ -247,8 +245,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[ERROR] Error hashing password: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": fmt.Sprintf("Error hashing password: %v", err),
 		})
 		return
@@ -263,8 +261,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logging.Log("[ERROR] Failed to create user: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"success": "false",
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,  // ← Changed to boolean
 			"message": fmt.Sprintf("Failed to create user: %v", err),
 		})
 		return
@@ -278,7 +276,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
+		"success": true,  // ← Already correct boolean
 		"user":    user,
 		"message": "Registration successful",
 	})
@@ -297,4 +295,3 @@ func isValidEmail(email string) bool {
 	
 	return true
 }
-
