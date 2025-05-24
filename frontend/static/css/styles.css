@@ -1501,14 +1501,17 @@ main {
     max-width: 70%;
     padding: 0.75rem;
     border-radius: var(--border-radius);
-    position: relative;
+    /* position: relative; */
 }
 
 .chat-msg.sent {
     align-self: flex-end;
+    display: flex;
     background-color: var(--primary-color);
     color: black;
     border: 1px solid white;
+    overflow-wrap:anywhere;
+    max-width: 90%; 
 }
 
 .chat-msg.received {
@@ -1517,9 +1520,16 @@ main {
     border: 2px solid var(--primary-color);
 }
 
-.msg-content {
+.msg-details {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+.msg-content {
+    /* display: flex; */
+    /* flex-direction:row; */
     gap: 0.25rem;
 }
 
@@ -1527,6 +1537,12 @@ main {
     font-size: 0.8rem;
     opacity: 0.8;
     align-self: flex-end;
+}
+.msg-text{
+    overflow: auto;
+}
+.msg-sender{
+    align-self: flex-start;
 }
 
 /* Message Input Form */

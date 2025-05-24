@@ -1,7 +1,7 @@
 function showErrorPage(errorData) {
-    // const error_page = document.querySelector("body");
-    document.open();
-    document.writeln(`<!DOCTYPE html>
+  // const error_page = document.querySelector("body");
+  document.open();
+  document.writeln(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -109,7 +109,10 @@ function showErrorPage(errorData) {
 }
 
 // Intercept all fetch requests
-const originalFetch = window.fetch;
+if (!window.originalFetch) {
+    const originalFetch = window.fetch;
+    window.originalFetch = originalFetch; 
+  }
 window.fetch = async function (...args) {
   const errorData = {
     400: {
@@ -141,38 +144,37 @@ window.fetch = async function (...args) {
     },
   };
   try {
-   
-    
     const response = await originalFetch(...args);
-    if (response.headers.get('X-Status-Code') === '404') {
+    if (response.headers.get("X-Status-Code") === "404") {
+      let error = errorData[405];
+      showErrorPage(error);
+      throw new Error("Page not found");
+    }
 
-        let error = errorData[405];
-        showErrorPage(error);
-        throw new Error('Page not found');
-    }
-   
-  
     if (response.status === 403) {
-        let error =errorData[403];
-        showErrorPage(error);
-        throw new Error("Forbidden");
-      }
-      if (response.status === 400) {
-        let error = errorData[400];
-        showErrorPage(error);
-        throw new Error('Bad Request');
+      let error = errorData[403];
+      showErrorPage(error);
+      throw new Error("Forbidden");
     }
-    console.log("code status",response.status)
-    // }
+    if (response.status === 400) {
+      let error = errorData[400];
+      showErrorPage(error);
+      throw new Error("Bad Request");
+    }
+    console.log("code status", response.status);
     return response;
+  } catch (error) {
+    console.log("error fetching: ", error);
+  }
 };
 
-if (window.location.pathname !== "/" && !window.location.pathname.startsWith("/static/")) {
-    // Check if this is a valid route by making a HEAD request
-    fetch(window.location.pathname, { method: 'HEAD' })
-        .catch(error => {
-            // The catch will be triggered by our intercepted fetch above if it's a 404
-            console.log("Route not found, error page already shown: ",error);
-        });
+if (
+  window.location.pathname !== "/" &&
+  !window.location.pathname.startsWith("/static/")
+) {
+  // Check if this is a valid route by making a HEAD request
+  fetch(window.location.pathname, { method: "HEAD" }).catch((error) => {
+    // The catch will be triggered by our intercepted fetch above if it's a 404
+    console.log("Route not found, error page already shown: ", error);
+  });
 }
-

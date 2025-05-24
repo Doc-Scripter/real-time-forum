@@ -20,7 +20,6 @@ import (
 )
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[INFO] Login request received from %s", r.RemoteAddr)
 	if r.Method != http.MethodPost {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -173,7 +172,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[INFO] Registration request received from %s", r.RemoteAddr)
 	if r.Method != http.MethodPost {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{

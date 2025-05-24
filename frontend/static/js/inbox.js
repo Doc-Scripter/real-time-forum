@@ -10,11 +10,13 @@ let currentReceiverId = null;
 let currentPartner = null;
 let unreadCheckInterval;
 let messageCache = {};
-let isInitialized = true;
 let messagesPerPage = 10; // Number of messages to display per page
 let currPage = 1; // Current page number
 let ws;
 let endIndex = 0;
+let lastLoadMoreCall = 0; // Add this variable near the top with other global variables
+
+
 async function checkUnreadMessages() {
   console.log("DEBUG: Checking unread messages");
   try {
@@ -173,6 +175,8 @@ function getConversations() {
 }
 // Render inbox: conversation list or chat view
 async function renderInbox() {
+  initWebSocket();
+
   document.getElementById("toggleRight").style.display = "flex";
   document.getElementById("toggleLeft").style.display = "flex";
   if (!currentUser) {
@@ -288,17 +292,14 @@ async function renderChat(partner, receiverId) {
     console.error("Messages is not an array", messages);
     messages = [];
   }
+  console.log(messages)
   
-  if (isInitialized) {
+  
     messageCache[receiverId] = {
       messages: messages,
       currPage: 1,
     };
     messages = messages.slice(-10);
-    
-    isInitialized = false;
-  }
-  console.log("DEBUG (info) :\n ", messages.length);
 
   const chatMessages = messages.filter((msg) => {
     if (!msg) return false;
@@ -327,6 +328,7 @@ async function renderChat(partner, receiverId) {
         <div class="chat-section">
             <button id="back-to-inbox" class="back-btn">← Back to Inbox</button>
             <h2>Chat with ${partner}</h2>
+            <button id="load-more-btn" class="load-more-btn">Load Previous Messages</button>
             <div class="chat-messages">
                 ${
                   chatMessages.length === 0
@@ -338,8 +340,11 @@ async function renderChat(partner, receiverId) {
                       msg.sender === currentUser ? "sent" : "received"
                     }">
                         <div class="msg-content">
-                            <span class="msg-text">${msg.data}</span>
+                        <span class="msg-text">${msg.data}</span>
+                        <div class="msg-details">
+                        <span class="msg-sender">${msg.sender === currentUser ? currentUser : msg.sender}</span>
                             <span class="msg-time">${msg.time}</span>
+                        </div>
                         </div>
                     </div>
                 `
@@ -364,7 +369,10 @@ async function renderChat(partner, receiverId) {
   }
 
   document.getElementById("back-to-inbox").onclick = () => renderInbox();
-
+  const loadMoreBtn = document.getElementById("load-more-btn");
+  if (loadMoreBtn) {
+    loadMoreBtn.onclick = () => loadMoreMessages(receiverId);
+  }
   document.getElementById("send-msg-form").onsubmit = async (e) => {
     // endIndex + 1;
     e.preventDefault();
@@ -439,11 +447,23 @@ async function renderChat(partner, receiverId) {
 }
 
 function loadMoreMessages(receiverId) {
+  // Throttle to once per second
+  const now = Date.now();
+  if (now - lastLoadMoreCall < 1000) {
+    return; // Exit early if called within 1 second
+  }
+  lastLoadMoreCall = now;
+  
   const cache = messageCache[receiverId];
-  if (cache.currPage * messagesPerPage < cache.messages.length) {
+  const totalMessages = cache.messages.length;
+  const alreadyDisplayed = cache.currPage * messagesPerPage;
+  
+  if (alreadyDisplayed < totalMessages) {
     cache.currPage++;
-    const startIndex = (cache.currPage - 1) * messagesPerPage;
-    const endIndex = startIndex + messagesPerPage;
+    
+    // Calculate backwards from the end
+    const endIndex = totalMessages - alreadyDisplayed;
+    const startIndex = Math.max(0, endIndex - messagesPerPage);
     const messagesToPrepend = cache.messages.slice(startIndex, endIndex);
 
     const messagesContainer = document.querySelector(".chat-messages");
@@ -452,9 +472,12 @@ function loadMoreMessages(receiverId) {
         (msg) => `
       <div class="chat-msg ${msg.sender === currentUser ? "sent" : "received"}">
         <div class="msg-content">
-          <span class="msg-text">${msg.data}</span>
+        <span class="msg-text">${sanitizeHTML(msg.data)}</span>
+         <div class="msg-details">
+        <span class="msg-sender">${msg.sender === currentUser ? currentUser : msg.sender}</span>
           <span class="msg-time">${msg.time}</span>
-        </div>
+          </div>
+          </div>
       </div>
     `
       )
@@ -462,7 +485,14 @@ function loadMoreMessages(receiverId) {
 
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = messagesHTML;
+    
+    // Store scroll position to maintain view
+    const currentScrollHeight = messagesContainer.scrollHeight;
     messagesContainer.prepend(...tempDiv.childNodes);
+    
+    // Adjust scroll to maintain position
+    const newScrollHeight = messagesContainer.scrollHeight;
+    messagesContainer.scrollTop = newScrollHeight - currentScrollHeight;
   }
 }
 
@@ -538,8 +568,11 @@ function appendNewMessage(message) {
   
   messageDiv.innerHTML = `
     <div class="msg-content">
-      <span class="msg-text">${sanitizeHTML(message.data)}</span>
-      <span class="msg-time">${message.time}</span>
+                        <span class="msg-text">${sanitizeHTML(message.data)}</span>
+                        <div class="msg-details">
+                        <span class="msg-sender">${message.sender === currentUser ? currentUser : message.sender}</span>
+                            <span class="msg-time">${message.time}</span>
+                        </div>
     </div>
   `;
   
@@ -599,12 +632,12 @@ if (inboxBtn && mainContent) {
 
 // Expose function globally for status.js and conversation items
 window.openInboxWithUser = function (nickname, receiverId) {
+  initWebSocket();
   renderChat(nickname, receiverId);
 };
 
 // On page load, fetch user info and initialize WebSocket
 window.addEventListener("DOMContentLoaded", async () => {
   await initInbox();
-  initWebSocket();
   startUnreadCheck();
 });
