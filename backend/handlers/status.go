@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -39,10 +40,14 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 		err := database.DB.QueryRow(
 			"SELECT expires_at FROM sessions WHERE user_id = ? ORDER BY expires_at DESC LIMIT 1", id,
 		).Scan(&expiresAt)
-		if err != nil  {
-			logging.Log("[ERROR] :Error checking user status: %v", err)
-			http.Error(w, "Failed to check user status", http.StatusInternalServerError)
-			return
+		if err != nil {
+			if err == sql.ErrNoRows {
+				continue
+			} else {
+				logging.Log("[ERROR] : checking user status: %v", err)
+				http.Error(w, "Failed to check user status", http.StatusInternalServerError)
+				return
+			}
 		}
 		online := expiresAt.After(time.Now())
 
