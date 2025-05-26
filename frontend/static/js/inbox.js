@@ -20,7 +20,13 @@ let lastLoadMoreCall = 0; // Add this variable near the top with other global va
 async function checkUnreadMessages() {
   console.log("DEBUG: Checking unread messages");
   try {
-    const response = await fetch("/api/protected/api/unread");
+    // Build the URL with optional exclude_sender parameter
+    let url = "/api/protected/api/unread";
+    if (currentReceiverId) {
+      url += `?exclude_sender=${currentReceiverId}`;
+    }
+    
+    const response = await fetch(url);
     if (response.ok) {
       const count = await response.json();
       console.log("DEBUG: Unread count:", count);
@@ -175,6 +181,10 @@ function getConversations() {
 }
 // Render inbox: conversation list or chat view
 async function renderInbox() {
+  // Reset current chat variables when returning to inbox
+  currentPartner = null;
+  currentReceiverId = null;
+  
   initWebSocket();
 
   document.getElementById("toggleRight").style.display = "flex";
@@ -253,6 +263,9 @@ async function renderInbox() {
       }
     };
   }
+
+  // Update unread messages count when returning to inbox
+  checkUnreadMessages();
 }
 
 // Clean up on page unload
@@ -309,6 +322,7 @@ async function renderChat(partner, receiverId) {
     );
   });
 
+  // In the renderChat function, after the try-catch block that marks messages as read:
   try {
     await fetch("/api/protected/api/messages", {
       method: "PUT",
@@ -319,6 +333,9 @@ async function renderChat(partner, receiverId) {
         senderId: receiverId,
       }),
     });
+    
+    // Update unread count after marking messages as read
+    checkUnreadMessages();
   } catch (error) {
     console.error("Error marking messages as read:", error);
   }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"forum/database"
 	"forum/logging"
@@ -19,7 +20,18 @@ func UnreadHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		unreadCount, err := getUnreadCount(userID)
+		// Get the optional exclude_sender parameter
+		excludeSenderStr := r.URL.Query().Get("exclude_sender")
+		var excludeSender *int
+		if excludeSenderStr != "" {
+			if id, err := strconv.Atoi(excludeSenderStr); err == nil {
+				excludeSender = &id
+			}else{
+				logging.Log("[ERROR] : Invalid exclude_sender parameter: %s", excludeSenderStr)
+			}
+		}
+
+		unreadCount, err := getUnreadCount(userID, excludeSender)
 		if err != nil {
 			logging.Log("[ERROR] Error getting unread count: %v", err)
 			utils.ErrorMessage(w, "Failed to fetch unread message count", http.StatusInternalServerError)
@@ -36,16 +48,33 @@ func UnreadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getUnreadCount(userID int) (int, error) {
+func getUnreadCount(userID int, excludeSender *int) (int, error) {
 	// Query the database to count unread messages for the given user
-	query := `
-        SELECT COUNT(DISTINCT user_id) 
-        FROM messages 
-        WHERE receiver_id = ? 
-        AND is_read = 0
-    `
+	// Exclude messages from the currently opened chat if specified
+	var query string
+	var args []interface{}
+
+	if excludeSender != nil {
+		query = `
+			SELECT COUNT(DISTINCT user_id) 
+			FROM messages 
+			WHERE receiver_id = ? 
+			AND is_read = 0
+			AND user_id != ?
+		`
+		args = []interface{}{userID, *excludeSender}
+	} else {
+		query = `
+			SELECT COUNT(DISTINCT user_id) 
+			FROM messages 
+			WHERE receiver_id = ? 
+			AND is_read = 0
+		`
+		args = []interface{}{userID}
+	}
+
 	var count int
-	err := database.DB.QueryRow(query, userID).Scan(&count)
+	err := database.DB.QueryRow(query, args...).Scan(&count)
 	if err != nil {
 		logging.Log("[ERROR] Error getting unread count: %v", err)
 		return 0, err
