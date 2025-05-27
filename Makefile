@@ -22,6 +22,6 @@ git:
 		echo "Removing existing 'origin' remote..."; \
 		git remote remove origin; \
 	fi 
-	git remote add github https://learn.zone01kisumu.ke/git/cliffootieno/real-time-forum
+	git remote add github https://github.com/Doc-Scripter/real-time-forum.git
 	git remote add gitea https://learn.zone01kisumu.ke/git/cliffootieno/real-time-forum
 	@echo "Remotes have been updated."
