@@ -17,6 +17,27 @@ let endIndex = 0;
 let lastLoadMoreCall = 0; // Add this variable near the top with other global variables
 
 
+
+async function markRead(receiverId) {
+  try {
+    await fetch("/api/protected/api/messages", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        senderId: receiverId,
+      }),
+    });
+    
+    // Update unread count after marking messages as read
+    checkUnreadMessages();
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+  }
+  
+}
+
 async function checkUnreadMessages() {
   console.log("DEBUG: Checking unread messages");
   try {
@@ -521,6 +542,10 @@ function sanitizeHTML(str) {
 }
 // Initialize WebSocket connection
 function initWebSocket() {
+  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+    console.log("WebSocket already connected or connecting.");
+    return; 
+  }
   ws = new WebSocket("api/protected/api/messaging"); // Adjust URL as needed
 
   ws.onopen = () => {
@@ -600,51 +625,14 @@ function appendNewMessage(message) {
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// Send message via WebSocket
-async function sendMessage(receiverId, text) {
-  if (!receiverId || receiverId === 0) {
-    console.error("Invalid receiver ID:", receiverId);
-    return;
-  }
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    const messageData = {
-      type: "message",
-      sender: currentUser,
-      receiver: receiverId,
-      data: text,
-      time: new Date().toLocaleTimeString(),
-      status: "Sent",
-    };
-
-    ws.send(JSON.stringify(messageData));
-
-    // Also store via REST API
-    try {
-      const response = await fetch("api/protected/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          receiver: receiverId,
-          data: text,
-        }),
-      });
-
-      if (response.ok) {
-        console.log("Message saved successfully");
-      } else {
-        console.error("Failed to save message");
-      }
-    } catch (error) {
-      console.error("Error saving message:", error);
-    }
-  } else {
-    console.error("WebSocket not connected");
-  }
-}
-
 // Attach event listener for inbox button
 if (inboxBtn && mainContent) {
-  inboxBtn.addEventListener("click", () => renderInbox());
+  inboxBtn.addEventListener("click", () =>{
+    markRead(receiverId);
+  renderInbox()
+  }
+);
+
 }
 
 // Expose function globally for status.js and conversation items
