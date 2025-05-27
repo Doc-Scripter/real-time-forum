@@ -195,13 +195,23 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
+	// Validate required fields and character limits
 	if user.Nickname == "" || user.FirstName == "" || user.LastName == "" || 
 	   user.Email == "" || user.Password == "" || user.Age < 13 {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": false,  // ← Changed to boolean
+			"success": false,
 			"message": "All fields are required and age must be at least 13",
+		})
+		return
+	}
+
+	// Validate character limits
+	if len(user.Nickname) > 32 || len(user.FirstName) > 32 || len(user.LastName) > 32 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Nickname, first name, and last name must be 32 characters or less",
 		})
 		return
 	}
