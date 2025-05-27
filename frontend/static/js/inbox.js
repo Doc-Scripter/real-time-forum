@@ -68,7 +68,7 @@ async function checkUnreadMessages() {
 // Start checking for unread messages
 function startUnreadCheck() {
   checkUnreadMessages(); // Initial check
-  unreadCheckInterval = setInterval(checkUnreadMessages, 10000); // Check every 10 seconds
+  unreadCheckInterval = setInterval(checkUnreadMessages, 5000); // Check every 10 seconds
 }
 
 // Stop checking for unread messages
@@ -406,7 +406,10 @@ async function renderChat(partner, receiverId) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
-  document.getElementById("back-to-inbox").onclick = () => renderInbox();
+  document.getElementById("back-to-inbox").onclick = () => {
+    markRead(receiverId);
+    renderInbox()
+  };
   const loadMoreBtn = document.getElementById("load-more-btn");
   if (loadMoreBtn) {
     loadMoreBtn.onclick = () => loadMoreMessages(receiverId);
@@ -627,10 +630,7 @@ function appendNewMessage(message) {
 
 // Attach event listener for inbox button
 if (inboxBtn && mainContent) {
-  inboxBtn.addEventListener("click", () =>{
-    markRead(receiverId);
-  renderInbox()
-  }
+  inboxBtn.addEventListener("click", () => renderInbox()
 );
 
 }
