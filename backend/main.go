@@ -2,7 +2,9 @@ package main
 
 import (
 	//"log"
+	"fmt"
 	"net/http"
+	"os"
 
 	"forum/database"
 	"forum/handlers"
@@ -11,6 +13,12 @@ import (
 )
 
 func main() {
+	// Check for flags
+	if len(os.Args) > 1 {
+		fmt.Fprintf(os.Stderr, "Error: No flags are allowed when running the program\n")
+		os.Exit(1)
+	}
+
 	// Initialize logger
 	logging.InitializeLogger()
 
