@@ -12,17 +12,47 @@ import (
 )
 
 type UserStatus struct {
-	Receiver int    `json:"receiver"`
-	Nickname string `json:"nickname"`
-	Online   bool   `json:"online"`
+	Receiver         int       `json:"receiver"`
+	Nickname         string    `json:"nickname"`
+	Online           bool      `json:"online"`
+	LastConversation *time.Time `json:"last_conversation,omitempty"`
 }
 
 func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r)
 
-	rows, err := database.DB.Query("SELECT id, nickname FROM users WHERE id != ?", userID)
+	// Get all users with their last conversation time
+	query := `
+		SELECT DISTINCT u.id, u.nickname,
+			   CASE WHEN s.expires_at > datetime('now') THEN 1 ELSE 0 END as online,
+			   m.last_conversation
+		FROM users u
+		LEFT JOIN (
+			SELECT user_id, MAX(expires_at) as expires_at
+			FROM sessions 
+			GROUP BY user_id
+		) s ON u.id = s.user_id
+		LEFT JOIN (
+			SELECT 
+				CASE 
+					WHEN user_id = ? THEN receiver_id 
+					ELSE user_id 
+				END as conversation_partner,
+				MAX(created_at) as last_conversation
+			FROM messages
+			WHERE user_id = ? OR receiver_id = ?
+			GROUP BY conversation_partner
+		) m ON u.id = m.conversation_partner
+		WHERE u.id != ?
+		ORDER BY 
+			CASE WHEN m.last_conversation IS NOT NULL THEN 0 ELSE 1 END,
+			m.last_conversation DESC,
+			u.nickname ASC
+	`
+
+	rows, err := database.DB.Query(query, userID, userID, userID, userID)
 	if err != nil {
-		logging.Log("Error fetching users: %v", err)
+		logging.Log("[ERROR] : fetching users: %v", err)
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
 	}
@@ -32,26 +62,31 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id int
 		var nickname string
-		if err := rows.Scan(&id, &nickname); err != nil {
+		var online bool
+		var lastConversationStr sql.NullString // Changed from sql.NullTime to sql.NullString
+
+		if err := rows.Scan(&id, &nickname, &online, &lastConversationStr); err != nil {
+			logging.Log("[ERROR] : fetching user status: %v", err)
 			continue
 		}
 
-		var expiresAt time.Time
-		err := database.DB.QueryRow(
-			"SELECT expires_at FROM sessions WHERE user_id = ? ORDER BY expires_at DESC LIMIT 1", id,
-		).Scan(&expiresAt)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				continue
-			} else {
-				logging.Log("[ERROR] : checking user status: %v", err)
-				http.Error(w, "Failed to check user status", http.StatusInternalServerError)
-				return
+		user := UserStatus{
+			Receiver: id,
+			Nickname: nickname,
+			Online:   online,
+		}
+
+		// Parse the datetime string manually
+		if lastConversationStr.Valid && lastConversationStr.String != "" {
+			// SQLite datetime format: "2006-01-02 15:04:05"
+			if parsedTime, err := time.Parse("2006-01-02 15:04:05", lastConversationStr.String); err == nil {
+				user.LastConversation = &parsedTime
+			}else{
+				logging.Log("[ERROR] : fetching user status: %v", err)
 			}
 		}
-		online := expiresAt.After(time.Now())
 
-		users = append(users, UserStatus{Receiver: id, Nickname: nickname, Online: online})
+		users = append(users, user)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
