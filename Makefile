@@ -4,7 +4,7 @@ run :
 test:
 	cd backend && go test -v ./...
 format:
-	cd backend && go fmt -w -s .
+	cd backend && gofmt -w -s .
 clean:
 	cd backend/logs && rm -rf application.log
 reset:
@@ -14,3 +14,14 @@ reset:
 	make clean
 push:
 	git push github && git push origin
+merge:
+	git merge master
+git:
+	@echo "If you get an error , remove all remote -> git remote remove <branch name>"
+	@if git remote | grep -q "origin"; then \
+		echo "Removing existing 'origin' remote..."; \
+		git remote remove origin; \
+	fi 
+	git remote add github https://github.com/Doc-Scripter/real-time-forum.git
+	git remote add gitea https://learn.zone01kisumu.ke/git/cliffootieno/real-time-forum
+	@echo "Remotes have been updated."
