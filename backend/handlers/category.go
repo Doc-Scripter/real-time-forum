@@ -10,6 +10,11 @@ import (
 )
 
 func GetCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	categories, err := queries.GetCategories()
 	if err != nil {
 		logging.Log("[ERROR] Error getting categories: %v", err)
