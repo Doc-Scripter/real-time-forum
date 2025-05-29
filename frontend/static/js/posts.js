@@ -5,6 +5,63 @@ let currentCategory = '';
 let currentFilter = '';
 let fetchPostURL = 'api/protected/api/posts';
 
+// HTML sanitization function
+function sanitizeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[<>&"']/g, function(match) {
+        const escapeMap = {
+            '<': '&lt;',
+            '>': '&gt;',
+            '&': '&amp;',
+            '"': '&quot;',
+            "'": '&#x27;'
+        };
+        return escapeMap[match];
+    });
+}
+
+// Function to strip HTML tags and decode entities for input validation
+function stripAndValidateHTML(str) {
+    if (!str) return '';
+    // Remove any HTML tags and decode common entities
+    return str.replace(/<[^>]*>/g, '')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&')
+              .replace(/&quot;/g, '"')
+              .replace(/&#x27;/g, "'");
+}
+
+// Real-time input sanitization for post title
+function sanitizePostTitle(input) {
+    const originalValue = input.value;
+    const sanitizedValue = stripAndValidateHTML(originalValue);
+    
+    if (originalValue !== sanitizedValue) {
+        input.value = sanitizedValue;
+        showPostError('HTML tags and special characters are not allowed in the title');
+        setTimeout(() => {
+            const errorDiv = document.getElementById('post-error-message');
+            if (errorDiv) errorDiv.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// Real-time input sanitization for post content
+function sanitizePostContent(input) {
+    const originalValue = input.value;
+    const sanitizedValue = stripAndValidateHTML(originalValue);
+    
+    if (originalValue !== sanitizedValue) {
+        input.value = sanitizedValue;
+        showPostError('HTML tags and special characters are not allowed in the content');
+        setTimeout(() => {
+            const errorDiv = document.getElementById('post-error-message');
+            if (errorDiv) errorDiv.style.display = 'none';
+        }, 3000);
+    }
+}
+
 async function loadFilterCategories() {
     try {
         const response = await fetch('api/protected/api/categories');
@@ -95,6 +152,24 @@ async function openCreatePostModal() {
         // If authenticated, show modal and load categories
         document.getElementById('createPostModal').classList.add('active');
         loadPostCategories();
+        
+        // Add event listeners for real-time sanitization
+        const titleInput = document.getElementById('postTitle');
+        const contentInput = document.getElementById('postContent');
+        
+        if (titleInput) {
+            titleInput.addEventListener('input', (e) => sanitizePostTitle(e.target));
+            titleInput.addEventListener('paste', (e) => {
+                setTimeout(() => sanitizePostTitle(e.target), 10);
+            });
+        }
+        
+        if (contentInput) {
+            contentInput.addEventListener('input', (e) => sanitizePostContent(e.target));
+            contentInput.addEventListener('paste', (e) => {
+                setTimeout(() => sanitizePostContent(e.target), 10);
+            });
+        }
     } catch (error) {
         console.error('Error checking auth status:', error);
         handleError('Please login to create a post');
@@ -106,20 +181,24 @@ function createPostElement(post) {
     postDiv.className = 'post';
     postDiv.dataset.postId = post.id;
     
+    // Sanitize post content for display
+    const sanitizedTitle = sanitizeHTML(post.title);
+    const sanitizedContent = sanitizeHTML(post.content);
+    
     // Truncate content if it's longer than 800 characters
-    const isLongPost = post.content.length > 800;
-    const truncatedContent = isLongPost ? post.content.slice(0, 800) + '...' : post.content;
+    const isLongPost = sanitizedContent.length > 800;
+    const truncatedContent = isLongPost ? sanitizedContent.slice(0, 800) + '...' : sanitizedContent;
     
     postDiv.innerHTML = `
         <div class="post-header">
-            <h3>${post.title}</h3>
-            <small class="post-meta-info">Posted by ${post.nickname} on ${new Date(post.created_at).toLocaleString()}</small>
+            <h3>${sanitizedTitle}</h3>
+            <small class="post-meta-info">Posted by ${sanitizeHTML(post.nickname)} on ${new Date(post.created_at).toLocaleString()}</small>
         </div>
         <div class="post-content">
             <p>${truncatedContent}</p>
             ${isLongPost ? `
                 <div class="read-more-section">
-                    <button onclick="toggleFullPost(this, \`${encodeURIComponent(post.content)}\`)" class="read-more-btn">
+                    <button onclick="toggleFullPost(this, \`${encodeURIComponent(sanitizedContent)}\`)" class="read-more-btn">
                         Read More
                     </button>
                 </div>
@@ -128,7 +207,7 @@ function createPostElement(post) {
         <div class="post-footer">
             <div class="categories">
                 ${post.categories ? post.categories.map(cat => 
-                    `<span class="category-tag">${cat.name}</span>`
+                    `<span class="category-tag">${sanitizeHTML(cat.name)}</span>`
                 ).join('') : ''}
             </div>
             <div class="post-actions">
@@ -163,10 +242,10 @@ function toggleFullPost(button, content) {
     const paragraph = postContent.querySelector('p');
     
     if (button.textContent === 'Read More') {
-        paragraph.textContent = decodedContent;
+        paragraph.innerHTML = decodedContent;
         button.textContent = 'Show Less';
     } else {
-        paragraph.textContent = decodedContent.slice(0, 800) + '...';
+        paragraph.innerHTML = decodedContent.slice(0, 800) + '...';
         button.textContent = 'Read More';
         // Scroll back to the top of the post
         button.closest('.post').scrollIntoView({ behavior: 'smooth' });
@@ -231,17 +310,38 @@ function closeCreatePostModal() {
     document.getElementById('createPostForm').reset();
 }
 
-// post and title validation
-function validatePostForm(title, content) {
+// post and title validation with HTML checking
+function validatePostForm() {
+    const titleInput = document.getElementById('postTitle');
+    const contentInput = document.getElementById('postContent');
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
     const errorDiv = document.getElementById('post-error-message');
     
-    if (!title || title.trim() === '') {
+    // Check for HTML tags or suspicious characters
+    const htmlPattern = /<[^>]*>|&[a-zA-Z0-9]+;/;
+    
+    if (!title) {
         showPostError('Please enter a post title');
         return false;
     }
     
-    if (!content || content.trim() === '') {
+    if (htmlPattern.test(title)) {
+        showPostError('HTML tags and special characters are not allowed in the title');
+        // Clean the input
+        titleInput.value = stripAndValidateHTML(title);
+        return false;
+    }
+    
+    if (!content) {
         showPostError('Please enter post content');
+        return false;
+    }
+    
+    if (htmlPattern.test(content)) {
+        showPostError('HTML tags and special characters are not allowed in the content');
+        // Clean the input
+        contentInput.value = stripAndValidateHTML(content);
         return false;
     }
     
@@ -261,27 +361,7 @@ function showPostError(message) {
     errorDiv.style.display = 'block';
 }
 
-// Validate post form
-function validatePostForm() {
-    const title = document.getElementById('postTitle').value.trim();
-    const content = document.getElementById('postContent').value.trim();
-    const errorDiv = document.getElementById('post-error-message');
-
-    if (!title) {
-        showPostError('Please enter a post title');
-        return false;
-    }
-
-    if (!content) {
-        showPostError('Please enter post content');
-        return false;
-    }
-
-    errorDiv.style.display = 'none';
-    return true;
-}
-
-// Modified create post handler with validation
+// Modified create post handler with enhanced validation and sanitization
 async function handleCreatePost(event) {
     event.preventDefault();
     
@@ -289,8 +369,9 @@ async function handleCreatePost(event) {
         return;
     }
 
-    const title = document.getElementById('postTitle').value;
-    const content = document.getElementById('postContent').value;
+    // Get and sanitize the values
+    const title = stripAndValidateHTML(document.getElementById('postTitle').value.trim());
+    const content = stripAndValidateHTML(document.getElementById('postContent').value.trim());
     const selectedCategories = Array.from(document.querySelectorAll('#postCategories input:checked')).map(input => parseInt(input.value));
 
     try {
@@ -442,6 +523,14 @@ async function submitComment(postId) {
         return;
     }
 
+    // Sanitize comment content
+    const sanitizedContent = stripAndValidateHTML(content);
+    if (content !== sanitizedContent) {
+        handleError('HTML tags and special characters are not allowed in comments');
+        textarea.value = sanitizedContent;
+        return;
+    }
+
     try {
         const authResponse = await fetch('/api/protected/api/auth/status');
         const authData = await authResponse.json();
@@ -458,7 +547,7 @@ async function submitComment(postId) {
             },
             body: JSON.stringify({
                 post_id: postId,
-                content: content
+                content: sanitizedContent
             })
         });
 
