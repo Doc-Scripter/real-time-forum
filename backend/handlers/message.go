@@ -27,20 +27,7 @@ type Message struct {
 var (
 	messages      []Message
 	messagesMutex sync.Mutex
-	upgrader      = websocket.Upgrader{
-		HandshakeTimeout: 0,
-		ReadBufferSize:   0,
-		WriteBufferSize:  0,
-		WriteBufferPool:  nil,
-		Subprotocols:     []string{},
-		Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
-			panic("TODO")
-		},
-		CheckOrigin: func(r *http.Request) bool {
-			panic("TODO")
-		},
-		EnableCompression: false,
-	}
+	upgrader      = websocket.Upgrader{}
 	clients       = make(map[*websocket.Conn]bool)
 	broadcast     = make(chan Message)
 )
