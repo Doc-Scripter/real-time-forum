@@ -344,6 +344,9 @@ async function checkAuth() {
     }
 }
 
+setInterval(checkAuth, 5000);
+
+
 // Enhanced authentication handler
 async function handleAuth(event) {
     event.preventDefault();
