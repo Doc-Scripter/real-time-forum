@@ -11,4 +11,4 @@ backend/queries/test_forum.db
 .trae
 application.log
 .vscode
-handlers/data
+backend/handlers/data
