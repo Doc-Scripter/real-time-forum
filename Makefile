@@ -13,7 +13,7 @@ reset:
 	migrate up
 	make clean
 push:
-	git push github && git push origin
+	git push github && git push gitea
 merge:
 	git merge master
 git:
