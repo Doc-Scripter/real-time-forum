@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 )
 
-// InitializeLogger sets up the logger with file output
+// InitializeLogger creates a logging system with both file and terminal output capabilities.
+// It sets up a logs directory, creates a log file, and initializes two loggers - one for
+// file logging and another for terminal output.
 func InitializeLogger() {
-	// Create logs directory if it doesn't exist
 	logsDir := "logs"
 	if err := os.MkdirAll(logsDir, 0755); err != nil {
 		log.Fatal("Failed to create logs directory:", err)
 	}
 
-	// Create log file
 	logFile, err := os.OpenFile(
 		filepath.Join(logsDir, "application.log"),
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
@@ -24,29 +24,25 @@ func InitializeLogger() {
 		log.Fatal("Failed to create log file:", err)
 	}
 
-	// Create a logger that writes to file
 	fileLogger := log.New(logFile, "", log.LstdFlags)
-
-	// Create a logger that writes to terminal
 	terminalLogger = log.New(os.Stdout, "", log.LstdFlags)
-
-	// Store both loggers in package-level variables
+	
 	logger = fileLogger
 	terminalLogger.Println("Logger initialized successfully")
 }
 
-// Logger that writes to file
+// logger is the package-level variable for file logging
 var logger *log.Logger
 
-// Logger that writes to terminal
+// terminalLogger is the package-level variable for terminal logging
 var terminalLogger *log.Logger
 
-// Log writes to file only
+// Log writes the formatted message to the log file
 func Log(format string, v ...any) {
 	logger.Printf(format, v...)
 }
 
-// TerminalLog writes to terminal only
+// TerminalLog writes the formatted message to the terminal
 func TerminalLog(format string, v ...interface{}) {
 	terminalLogger.Printf(format, v...)
 }
