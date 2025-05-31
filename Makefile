@@ -13,7 +13,7 @@ reset:
 	migrate up
 	make clean
 push:
-	git push github && git push origin
+	git push github && git push gitea
 merge:
 	git merge master
 git:
@@ -22,6 +22,10 @@ git:
 		echo "Removing existing 'origin' remote..."; \
 		git remote remove origin; \
 	fi 
+	@if git remote | grep -q "github"; then \
+		echo "Removing existing 'origin' remote..."; \
+		git remote remove github; \
+	fi
 	git remote add github https://github.com/Doc-Scripter/real-time-forum.git
 	git remote add gitea https://learn.zone01kisumu.ke/git/cliffootieno/real-time-forum
 	@echo "Remotes have been updated."

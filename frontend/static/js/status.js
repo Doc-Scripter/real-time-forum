@@ -5,7 +5,7 @@ async function fetchAndDisplayOnlineUsers() {
             throw new Error('Failed to fetch users');
         }
         let users = await response.json();
-        console.log("yow",users)
+        ("yow",users)
         if (!Array.isArray(users)) users = [];
         
         if (!users.length) {

@@ -24,7 +24,7 @@ class WebSocketService {
             this.ws = new WebSocket(`ws://localhost:9111/ws?userId=${userId}`);
             
             this.ws.onopen = () => {
-                console.log('WebSocket connection established');
+                ('WebSocket connection established');
                 this.connected = true;
                 this.connectAttempts = 0;
                 
@@ -38,7 +38,7 @@ class WebSocketService {
             this.ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-                    console.log('WebSocket message received:', message);
+                    ('WebSocket message received:', message);
                     this.handleWebSocketMessage(message);
                 } catch (error) {
                     console.error('Error processing WebSocket message:', error);
@@ -46,7 +46,7 @@ class WebSocketService {
             };
 
             this.ws.onclose = () => {
-                console.log('WebSocket connection closed');
+                ('WebSocket connection closed');
                 this.connected = false;
                 this.reconnect();
             };
@@ -64,7 +64,7 @@ class WebSocketService {
     reconnect() {
         if (!this.connected) {
             const delay = Math.min(1000 * Math.pow(2, this.connectAttempts), this.maxReconnectDelay);
-            console.log(`Attempting to reconnect in ${delay}ms...`);
+            (`Attempting to reconnect in ${delay}ms...`);
             setTimeout(() => {
                 this.connectAttempts++;
                 this.connect();
@@ -74,10 +74,10 @@ class WebSocketService {
 
     handleWebSocketMessage(message) {
         try {
-            console.log('Processing message:', message);
+            ('Processing message:', message);
             const handlers = this.handlers[message.type];
             if (handlers && handlers.size > 0) {
-                console.log(`Found ${handlers.size} handlers for type ${message.type}`);
+                (`Found ${handlers.size} handlers for type ${message.type}`);
                 handlers.forEach(handler => {
                     try {
                         handler(message);
@@ -86,7 +86,7 @@ class WebSocketService {
                     }
                 });
             } else {
-                console.log('No handlers found for message type:', message.type);
+                ('No handlers found for message type:', message.type);
             }
         } catch (error) {
             console.error('Error handling WebSocket message:', error);
@@ -94,10 +94,10 @@ class WebSocketService {
     }
 
     subscribe(type, handler) {
-        console.log(`Subscribing to ${type} events`);
+        (`Subscribing to ${type} events`);
         if (this.handlers[type]) {
             this.handlers[type].add(handler);
-            console.log(`Handlers for ${type}: ${this.handlers[type].size}`);
+            (`Handlers for ${type}: ${this.handlers[type].size}`);
         }
     }
 
@@ -116,17 +116,17 @@ class WebSocketService {
         };
 
         if (!this.connected) {
-            console.log('WebSocket not connected, queueing message:', message);
+            ('WebSocket not connected, queueing message:', message);
             this.messageQueue.push(message);
             return;
         }
 
         try {
             if (this.ws.readyState === WebSocket.OPEN) {
-                console.log('Sending WebSocket message:', message);
+                ('Sending WebSocket message:', message);
                 this.ws.send(JSON.stringify(message));
             } else {
-                console.log('WebSocket not ready, queueing message:', message);
+                ('WebSocket not ready, queueing message:', message);
                 this.messageQueue.push(message);
             }
         } catch (error) {

@@ -16,8 +16,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Message represents a chat message with sender, receiver and content information
 type Message struct {
-	// ID       int    `json:"id,omitempty"`
 	Data     string `json:"data"`
 	Sender   string `json:"sender"`
 	Receiver int    `json:"receiver"`
@@ -32,10 +32,12 @@ var (
 	broadcast     = make(chan Message)
 )
 
+// init starts the message handling goroutine
 func init() {
 	go handleMessages()
 }
 
+// handleMessages processes incoming messages and broadcasts them to connected clients
 func handleMessages() {
 	for {
 		msg, ok := <-broadcast
@@ -47,7 +49,6 @@ func handleMessages() {
 		messages = append(messages, msg)
 		messagesMutex.Unlock()
 		for client := range clients {
-			// Send an envelope with type and message
 			envelope := map[string]interface{}{
 				"type":    "message",
 				"message": msg,
@@ -62,6 +63,7 @@ func handleMessages() {
 	}
 }
 
+// MarkMessagesAsRead updates messages as read for a given receiver and sender
 func MarkMessagesAsRead(receiverID, senderID int) error {
     query := `
         UPDATE messages 
@@ -76,6 +78,7 @@ func MarkMessagesAsRead(receiverID, senderID int) error {
     return nil
 }
 
+// SaveMessageToDB stores a new message in the database
 func SaveMessageToDB(senderID, receiverID int, text string) error {
 	_, err := database.DB.Exec(
 		"INSERT INTO messages (user_id, receiver_id, message,is_read) VALUES (?, ?, ?, 0)",
@@ -84,7 +87,7 @@ func SaveMessageToDB(senderID, receiverID int, text string) error {
 	return err
 }
 
-// getMessages retrieves all messages between two users, ordered by creation time.
+// getMessages retrieves all messages between two users, ordered by creation time
 func getMessages(loggedInUserID, otherUserID int) ([]Message, error) {
 	rows, err := database.DB.Query(
 		`SELECT m.message, u.nickname AS  sender, m.receiver_id, m.created_at
@@ -116,10 +119,8 @@ func getMessages(loggedInUserID, otherUserID int) ([]Message, error) {
 	return allMessages, nil
 }
 
-// New function to get all messages for a user
+// getLastMessages retrieves the most recent message from each conversation for a user
 func getLastMessages(userID int) ([]Message, error) {
-     // This query gets the last message from each conversation
-    // It uses a subquery to find the max created_at for each conversation pair
     query := `
         SELECT m.message, u.nickname as sender_name, 
                CASE 
@@ -164,13 +165,14 @@ func getLastMessages(userID int) ([]Message, error) {
         }
         
         msg.Time = createdAt.Format("3:04:05 PM")
-        msg.Receiver = otherUserID // Set the other user's ID as the receiver
+        msg.Receiver = otherUserID
         result = append(result, msg)
     }
     
     return result, nil
 }
 
+// MessageHandler handles HTTP requests for message operations (GET, POST, PUT)
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r)
 	if !ok {
@@ -179,7 +181,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case http.MethodPut:
-        // Mark messages as read
         var req struct {
             SenderID int `json:"senderId"`
         }
@@ -207,7 +208,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Has("receiver"){
 		receiverIDStr := r.URL.Query().Get("receiver")
 
-		// Check if we're filtering by receiver
 		if receiverIDStr == "" {
 			utils.ErrorMessage(w, "Invalid receiver ID", http.StatusBadRequest)
 			return
@@ -219,7 +219,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Get messages between these two users
 		msgs, err := getMessages(userID, receiverID)
 		if err != nil {
 			logging.Log("Error getting messages: %v", err)
@@ -265,32 +264,5 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		utils.ErrorMessage(w, "Method not allowed", http.StatusBadRequest)
 		return
-	}
-}
-
-func MessageWebSocketHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		logging.Log("Error upgrading to WebSocket: %v", err)
-		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
-		return
-	}
-	clients[conn] = true
-	defer func() {
-		conn.Close()
-		delete(clients, conn)
-	}()
-	for {
-		var msg Message
-		err := conn.ReadJSON(&msg)
-		if err != nil {
-			logging.Log("[INFO] : reading message: %v", err)
-			break
-		}
-		if msg.Time == "" {
-			msg.Time = time.Now().Format("15:04:05")
-		}
-
-		broadcast <- msg
 	}
 }

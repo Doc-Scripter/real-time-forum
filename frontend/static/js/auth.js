@@ -223,6 +223,7 @@ function openAuthModal(mode, message = '') {
     // Reset password strength meter and requirements
     if (!isLoginMode) {
         checkPasswordStrength('');
+        stopAuthCheck();
     }
     
     // Setup input sanitization when modal opens
