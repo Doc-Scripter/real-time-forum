@@ -39,7 +39,7 @@ async function markRead(receiverId) {
 }
 
 async function checkUnreadMessages() {
-  console.log("DEBUG: Checking unread messages");
+  ("DEBUG: Checking unread messages");
   try {
     // Build the URL with optional exclude_sender parameter
     let url = "/api/protected/api/unread";
@@ -50,7 +50,7 @@ async function checkUnreadMessages() {
     const response = await fetch(url);
     if (response.ok) {
       const count = await response.json();
-      console.log("DEBUG: Unread count:", count);
+      ("DEBUG: Unread count:", count);
       const badge = document.getElementById("unread-badge");
 
       if (count > 0) {
@@ -83,7 +83,7 @@ async function fetchCurrentUser() {
   try {
     const response = await fetch("/api/protected/api/auth/status");
     const data = await response.json();
-    console.log("INFO : fetched current user:",data)
+    ("INFO : fetched current user:",data)
     if (data.authenticated) {
       currentUser = data.nickname;
       currentUserId = data.user_id;
@@ -167,15 +167,15 @@ function getConversations() {
     return [];
   }
 
-  console.log("DEBUG - Last Messages:", lastMessages);
-  console.log("DEBUG - Current User:", currentUser);
+  ("DEBUG - Last Messages:", lastMessages);
+  ("DEBUG - Current User:", currentUser);
 
   return lastMessages.map((msg) => {
-    console.log("DEBUG - Processing message:", msg);
+    ("DEBUG - Processing message:", msg);
 
     // Log values before deciding partner
-    console.log("DEBUG - Sender:", msg.sender);
-    console.log("DEBUG - Receiver:", msg.receiver);
+    ("DEBUG - Sender:", msg.sender);
+    ("DEBUG - Receiver:", msg.receiver);
     let receiverName = msg.receiver;
     const onlineUsers = document.querySelectorAll(".online-user");
     onlineUsers.forEach((user) => {
@@ -187,7 +187,7 @@ function getConversations() {
     const isCurrentUserSender = msg.sender === currentUser;
     const partner = isCurrentUserSender ? receiverName : msg.sender;
 
-    console.log("DEBUG - Determined partner:", partner);
+    ("DEBUG - Determined partner:", partner);
 
     return {
       partner: partner,
@@ -216,13 +216,13 @@ async function renderInbox() {
   }
 
   await fetchLastMessages();
-  console.log("DEBUG - After fetchLastMessages:", lastMessages);
+  ("DEBUG - After fetchLastMessages:", lastMessages);
 
   startInboxRefresh();
 
   // Show conversation list
   const conversations = getConversations();
-  console.log("DEBUG - Final conversations:", conversations);
+  ("DEBUG - Final conversations:", conversations);
   let inboxHTML = `
     <div class="inbox-section">
         <h2>Inbox</h2>
@@ -296,7 +296,7 @@ window.addEventListener("beforeunload", () => {
 });
 // Render chat with selected user
 async function renderChat(partner, receiverId) {
-  console.log("DEBUG: Opening chat with:", partner);
+  ("DEBUG: Opening chat with:", partner);
 
   const leftSidebar = document.querySelector(".sidebar-left");
   const rightSidebar = document.querySelector(".sidebar-right");
@@ -326,7 +326,7 @@ async function renderChat(partner, receiverId) {
     console.error("Messages is not an array", messages);
     messages = [];
   }
-  console.log(messages)
+  (messages)
   
   
     messageCache[receiverId] = {
@@ -420,7 +420,7 @@ async function renderChat(partner, receiverId) {
     const input = document.getElementById("msg-input");
     const text = input.value.trim();
     const sanitizedText=sanitizeHTML(text);
-    console.log("sending message: ", sanitizedText);
+    ("sending message: ", sanitizedText);
     if (!text) return;
 
     if (!receiverId) {
@@ -546,20 +546,20 @@ function sanitizeHTML(str) {
 // Initialize WebSocket connection
 function initWebSocket() {
   if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
-    console.log("WebSocket already connected or connecting.");
+    ("WebSocket already connected or connecting.");
     return; 
   }
   ws = new WebSocket("api/protected/api/messaging"); // Adjust URL as needed
 
   ws.onopen = () => {
-    console.log("WebSocket connected");
+    ("WebSocket connected");
     ws.send(JSON.stringify({ type: "auth", user: currentUser }));
   };
 
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
-      console.log("Received message:", data);
+      ("Received message:", data);
 
       if (data.type === "message" && data.message) {
         const message = {
@@ -598,7 +598,7 @@ function initWebSocket() {
   };
 
   ws.onclose = () => {
-    console.log("WebSocket disconnected, retrying...");
+    ("WebSocket disconnected, retrying...");
     setTimeout(initWebSocket, 2000); // Reconnect
   };
 }
