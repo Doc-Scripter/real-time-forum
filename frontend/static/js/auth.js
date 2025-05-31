@@ -1,6 +1,7 @@
 // Enhanced input validation and sanitization functions
 let isLoginMode = true;
 
+
 // Input sanitization function
 function sanitizeInput(input) {
     if (typeof input !== 'string') return '';
@@ -343,6 +344,16 @@ async function checkAuth() {
         document.getElementById('userFilters').style.display = 'none';
     }
 }
+let authInterval;
+function startAuthCheck(){
+authInterval = setInterval(checkAuth, 5000);
+}
+function stopAuthCheck(){
+    if (authInterval){
+        clearInterval(authInterval);
+    }
+}
+
 
 // Enhanced authentication handler
 async function handleAuth(event) {
@@ -415,6 +426,7 @@ async function handleAuth(event) {
 
 // Initialize input sanitization when the page loads
 document.addEventListener('DOMContentLoaded', function() {
+    startAuthCheck()
     setupInputSanitization();
 });
 
@@ -461,6 +473,7 @@ function openAuthModal(mode, message = '') {
     
     if (!isLoginMode) {
         checkPasswordStrength('');
+        stopAuthCheck();
     }
     
     // Clear any existing field errors and styling
