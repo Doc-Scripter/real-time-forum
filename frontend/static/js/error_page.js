@@ -161,10 +161,9 @@ window.fetch = async function (...args) {
       showErrorPage(error);
       throw new Error("Bad Request");
     }
-    console.log("code status", response.status);
     return response;
   } catch (error) {
-    console.log("error fetching: ", error);
+    console.error("error fetching: ", error);
   }
 };
 
@@ -175,6 +174,6 @@ if (
   // Check if this is a valid route by making a HEAD request
   fetch(window.location.pathname, { method: "HEAD" }).catch((error) => {
     // The catch will be triggered by our intercepted fetch above if it's a 404
-    console.log("Route not found, error page already shown: ", error);
+    console.error("Route not found, error page already shown: ", error);
   });
 }

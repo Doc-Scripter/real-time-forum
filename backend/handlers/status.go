@@ -11,6 +11,7 @@ import (
 	"forum/middleware"
 )
 
+// UserStatus represents the current status of a user in the forum
 type UserStatus struct {
 	Receiver         int       `json:"receiver"`
 	Nickname         string    `json:"nickname"`
@@ -18,10 +19,11 @@ type UserStatus struct {
 	LastConversation *time.Time `json:"last_conversation,omitempty"`
 }
 
+// GetForumStatusHandler retrieves the status of all users in the forum
+// Returns a JSON array of UserStatus containing online status and last conversation time
 func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r)
 
-	// Get all users with their last conversation time
 	query := `
 		SELECT DISTINCT u.id, u.nickname,
 			   CASE WHEN s.expires_at > datetime('now') THEN 1 ELSE 0 END as online,
@@ -63,7 +65,7 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 		var id int
 		var nickname string
 		var online bool
-		var lastConversationStr sql.NullString // Changed from sql.NullTime to sql.NullString
+		var lastConversationStr sql.NullString
 
 		if err := rows.Scan(&id, &nickname, &online, &lastConversationStr); err != nil {
 			logging.Log("[ERROR] : fetching user status: %v", err)
@@ -76,9 +78,7 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 			Online:   online,
 		}
 
-		// Parse the datetime string manually
 		if lastConversationStr.Valid && lastConversationStr.String != "" {
-			// SQLite datetime format: "2006-01-02 15:04:05"
 			if parsedTime, err := time.Parse("2006-01-02 15:04:05", lastConversationStr.String); err == nil {
 				user.LastConversation = &parsedTime
 			}else{
