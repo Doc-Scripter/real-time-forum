@@ -208,7 +208,7 @@ async function renderInbox() {
   currentPartner = null;
   currentReceiverId = null;
   
-  initWebSocket();
+  // initWebSocket();
 
   document.getElementById("toggleRight").style.display = "flex";
   document.getElementById("toggleLeft").style.display = "flex";
@@ -218,7 +218,6 @@ async function renderInbox() {
   }
 
   await fetchLastMessages();
-  ("DEBUG - After fetchLastMessages:", lastMessages);
 
   startInboxRefresh();
 
@@ -318,7 +317,7 @@ async function renderChat(partner, receiverId) {
   currentReceiverId = receiverId;
   if (!currentUser || !receiverId) {
     console.error("renderChat called with invalid partner/ID", partner);
-    renderInbox(); // Go back to inbox if details are missing
+    renderInbox(); 
     return;
   }
 
@@ -588,9 +587,6 @@ function initWebSocket() {
               message.receiver === currentPartner)
           ) {
             appendNewMessage(message)
-          }else{
-
-            checkUnreadMessages();
           }
         }
       }
