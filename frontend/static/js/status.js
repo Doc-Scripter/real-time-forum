@@ -1,11 +1,7 @@
 async function fetchAndDisplayOnlineUsers() {
     try {
         const response = await fetch('/api/protected/api/status');
-        if (!response.ok) {
-            throw new Error('Failed to fetch users');
-        }
         let users = await response.json();
-        ("yow",users)
         if (!Array.isArray(users)) users = [];
         
         if (!users.length) {
@@ -72,9 +68,3 @@ styling.innerHTML = `
 .conversation-indicator { font-size: 12px; margin-left: auto; }
 `;
 document.head.appendChild(styling);
-
-// Update users every 30 seconds
-setInterval(fetchAndDisplayOnlineUsers, 5000);
-
-// Initial load
-document.addEventListener('DOMContentLoaded', fetchAndDisplayOnlineUsers);
