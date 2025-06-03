@@ -118,7 +118,6 @@ async function loadFilterCategories() {
         fetchPosts();
 
     } catch (error) {
-        console.error('Error loading categories:', error);
     }
 }
 
@@ -258,10 +257,7 @@ async function fetchPosts(append = false) {
     try {
         isLoading = true;
         const response = await fetch(`${fetchPostURL}?page=${currentPage}&category=${currentCategory}&filter=${currentFilter}`);
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to fetch posts');
-        }
+        
         const posts = await response.json();
         const mainContent = document.getElementById('main-content');
          // Ensure posts-list exists inside main-content
@@ -298,7 +294,6 @@ async function fetchPosts(append = false) {
         setupInfiniteScroll();
 
     } catch (error) {
-        console.error('Error fetching posts:', error);    
         handleError(error.message);
     } finally {
         isLoading = false;
@@ -383,11 +378,7 @@ async function handleCreatePost(event) {
             body: JSON.stringify({ title, content, raw_categories: selectedCategories })
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to create post');
-        }
-
+       
         handleSuccess('Post created successfully');
         closeCreatePostModal();
         resetPosts();
@@ -497,10 +488,9 @@ function resetPosts() {
 
 // Called when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
-    resetPosts();
-    setupInfiniteScroll();
-    loadFilterCategories();
+    // checkAuth();
+    // resetPosts();
+    // setupInfiniteScroll();
 });
 
 // Update other functions that fetch posts to use resetPosts()
