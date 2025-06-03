@@ -197,7 +197,7 @@ function getConversations() {
       lastMsg: {
         data: msg.data || "",
         time: msg.time || "",
-        receiver: receiverName, // Changed from msg.sender to msg.receiver
+        receiver: receiverName, 
         receiverId: msg.receiver,
       },
     };
@@ -205,7 +205,6 @@ function getConversations() {
 }
 // Render inbox: conversation list or chat view
 async function renderInbox() {
-  // Reset current chat variables when returning to inbox
   currentPartner = null;
   currentReceiverId = null;
   
