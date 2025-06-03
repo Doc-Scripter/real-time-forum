@@ -67,7 +67,10 @@ async function checkUnreadMessages() {
 // Start checking for unread messages
 function startUnreadCheck() {
   checkUnreadMessages(); 
-  unreadCheckInterval = setInterval(checkUnreadMessages, 5000); 
+  if (!unreadCheckInterval){
+    unreadCheckInterval = setInterval(checkUnreadMessages, 5000); 
+
+  }
 }
 
 
