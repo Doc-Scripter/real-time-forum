@@ -34,6 +34,8 @@ function hasInvalidPasswordChars(value) {
   return false;
 }
 
+let initialization = false;
+
 async function checkAuth() {
   try {
     const response = await fetch("/api/protected/api/auth/status");
@@ -42,27 +44,31 @@ async function checkAuth() {
     const userFilters = document.getElementById("userFilters");
 
     if (data.authenticated) {
-    loadFilterCategories();
-    resetPosts();
-    setupInfiniteScroll();
-
-      authButtons.innerHTML = `
-                <div class="auth-status">
-                    <span class="welcome-text">Welcome, ${data.nickname}</span>
-                    <button onclick="logout()" class="auth-btn logout-btn">Logout</button>
-                </div>
-            `;
-      userFilters.style.display = "flex";
-      fetchAndDisplayOnlineUsers();
-      await initInbox();
-      startUnreadCheck();
-      setInterval(fetchAndDisplayOnlineUsers, 3000);
+        
+        authButtons.innerHTML = `
+        <div class="auth-status">
+        <span class="welcome-text">Welcome, ${data.nickname}</span>
+        <button onclick="logout()" class="auth-btn logout-btn">Logout</button>
+        </div>
+        `;
+        userFilters.style.display = "flex";
+        if (!initialization) {
+          resetPosts();
+          setupInfiniteScroll();
+        loadFilterCategories();
+        initialization = true;
+        fetchAndDisplayOnlineUsers();
+        await initInbox();
+        startUnreadCheck();
+        setInterval(fetchAndDisplayOnlineUsers, 3000);
+      }
     } else {
+        initialization=false;
       authButtons.innerHTML = `
                
             `;
       clearInterval(checkUnreadMessages);
-
+      stopUnreadCheck();
       clearInterval(fetchAndDisplayOnlineUsers);
       userFilters.style.display = "none";
       const trendingSection = document.querySelector(".trending-section");
