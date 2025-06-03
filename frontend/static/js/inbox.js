@@ -416,7 +416,6 @@ async function renderChat(partner, receiverId) {
     loadMoreBtn.onclick = () => loadMoreMessages(receiverId);
   }
   document.getElementById("send-msg-form").onsubmit = async (e) => {
-    // endIndex + 1;
     e.preventDefault();
     const input = document.getElementById("msg-input");
     const text = input.value.trim();
@@ -462,11 +461,7 @@ async function renderChat(partner, receiverId) {
         time: new Date().toLocaleTimeString(),
       }
       if (response.ok) {
-        // Add the sent message to the local messages array
         messages.push(newMessage);
-
-        // Re-render the chat to show the new message
-        // renderChat(partner, receiverId);
 
         appendNewMessage(newMessage)
       } else {
@@ -638,9 +633,3 @@ window.openInboxWithUser = function (nickname, receiverId) {
   initWebSocket();
   renderChat(nickname, receiverId);
 };
-
-// On page load, fetch user info and initialize WebSocket
-// window.addEventListener("DOMContentLoaded", async () => {
-//   await initInbox();
-//   startUnreadCheck();
-// });
