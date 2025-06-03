@@ -70,9 +70,7 @@ async function submitComment(postId) {
             })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to submit comment');
-        }
+        
 
         // Wait for the response before clearing the form
         await response.json();
@@ -135,9 +133,7 @@ async function handleCommentLike(commentId, isLike) {
             })
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to update like');
-        }
+       
         
         await fetchPosts();
         
