@@ -39,7 +39,6 @@ async function markRead(receiverId) {
 }
 
 async function checkUnreadMessages() {
-  ("DEBUG: Checking unread messages");
   try {
     // Build the URL with optional exclude_sender parameter
     let url = "/api/protected/api/unread";
@@ -67,9 +66,10 @@ async function checkUnreadMessages() {
 
 // Start checking for unread messages
 function startUnreadCheck() {
-  checkUnreadMessages(); // Initial check
-  unreadCheckInterval = setInterval(checkUnreadMessages, 5000); // Check every 10 seconds
+  checkUnreadMessages(); 
+  unreadCheckInterval = setInterval(checkUnreadMessages, 5000); 
 }
+
 
 // Stop checking for unread messages
 function stopUnreadCheck() {
@@ -642,7 +642,7 @@ window.openInboxWithUser = function (nickname, receiverId) {
 };
 
 // On page load, fetch user info and initialize WebSocket
-window.addEventListener("DOMContentLoaded", async () => {
-  await initInbox();
-  startUnreadCheck();
-});
+// window.addEventListener("DOMContentLoaded", async () => {
+//   await initInbox();
+//   startUnreadCheck();
+// });
