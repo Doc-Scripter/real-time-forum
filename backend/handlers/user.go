@@ -2,17 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-	"strings"
-	"time"
+	"fmt"
 	"forum/database"
 	"forum/logging"
 	"forum/models"
 	"forum/queries"
-	"fmt"
-	"log"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"log"
+	"net/http"
+	"strings"
+	"time"
 )
 
 // LoginHandler authenticates a user and creates a new session
@@ -48,10 +48,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err = database.DB.QueryRow(`
 		SELECT id,  nickname, age, gender, first_name, last_name, email, password 
 		FROM users 
-		WHERE email = ? OR nickname = ?`, 
+		WHERE email = ? OR nickname = ?`,
 		credentials.LoginIdentifier, credentials.LoginIdentifier).
 		Scan(&user.ID, &user.Nickname, &user.Age, &user.Gender, &user.FirstName, &user.LastName, &user.Email, &user.Password)
-	
+
 	if err != nil {
 		logging.Log("[WARNING] User not found: %v", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -127,21 +127,21 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie, err := r.Cookie("session_token")
-    if err != nil {
+	if err != nil {
 		logging.Log("[WARNING] Failed to get session token: %v", err)
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    var userID int
-    err = database.DB.QueryRow(`
+	var userID int
+	err = database.DB.QueryRow(`
         SELECT user_id FROM sessions 
         WHERE token = ?`, cookie.Value).Scan(&userID)
-    if err != nil {
+	if err != nil {
 		logging.Log("[ERROR] Failed to get user ID from session: %v", err)
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	err = queries.DeleteUserSessions(userID)
 	if err != nil {
@@ -188,8 +188,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Nickname == "" || user.FirstName == "" || user.LastName == "" || 
-	   user.Email == "" || user.Password == "" || user.Age < 13 {
+	if user.Nickname == "" || user.FirstName == "" || user.LastName == "" ||
+		user.Email == "" || user.Password == "" || user.Age < 13 {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": false,
@@ -281,10 +281,10 @@ func isValidEmail(email string) bool {
 	if email == "" {
 		return false
 	}
-	
+
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
 		return false
 	}
-	
+
 	return true
 }

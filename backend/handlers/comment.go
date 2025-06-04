@@ -52,7 +52,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		utils.ErrorMessage(w,"Method Not Found",http.StatusMethodNotAllowed)
+		utils.ErrorMessage(w, "Method Not Found", http.StatusMethodNotAllowed)
 
 		return
 	}

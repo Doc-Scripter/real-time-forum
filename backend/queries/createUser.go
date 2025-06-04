@@ -1,12 +1,11 @@
 package queries
 
 import (
-
 	"fmt"
 
 	"forum/database"
-	"time"
 	"forum/models"
+	"time"
 )
 
 // Insert a new user
