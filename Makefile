@@ -32,3 +32,5 @@ git:
 pull:
 	git fetch github
 	git pull --all
+kill:
+	pkill -f "go run .*backend"
