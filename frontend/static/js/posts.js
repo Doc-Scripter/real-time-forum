@@ -495,13 +495,6 @@ function resetPosts() {
     fetchPosts(false);
 }
 
-// Called when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
-    resetPosts();
-    setupInfiniteScroll();
-    loadFilterCategories();
-});
 
 // Update other functions that fetch posts to use resetPosts()
 function applyFilters(filter) {

@@ -5,7 +5,6 @@ async function fetchAndDisplayOnlineUsers() {
             throw new Error('Failed to fetch users');
         }
         let users = await response.json();
-        ("yow",users)
         if (!Array.isArray(users)) users = [];
         
         if (!users.length) {
@@ -54,7 +53,6 @@ async function fetchAndDisplayOnlineUsers() {
             </div>
         `;
     } catch (error) {
-        console.error('Error fetching users:', error);
     }
 }
 
@@ -73,8 +71,3 @@ styling.innerHTML = `
 `;
 document.head.appendChild(styling);
 
-// Update users every 30 seconds
-setInterval(fetchAndDisplayOnlineUsers, 5000);
-
-// Initial load
-document.addEventListener('DOMContentLoaded', fetchAndDisplayOnlineUsers);
