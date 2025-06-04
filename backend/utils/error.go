@@ -19,7 +19,6 @@ var ErrorMessages = map[int]ErrorPage{
 	500: {Code: 500, Title: "Internal Server Error", Description: "Something went wrong on our end. Please try again later."},
 }
 
-
 func ErrorMessage(w http.ResponseWriter, msg string, errorCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errorCode)

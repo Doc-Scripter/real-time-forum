@@ -20,7 +20,6 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Status-Code", "404")
 	serveTemplate(w, r, "index.html")
 
-
 }
 
 func Static(w http.ResponseWriter, r *http.Request) {

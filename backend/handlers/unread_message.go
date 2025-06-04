@@ -26,7 +26,7 @@ func UnreadHandler(w http.ResponseWriter, r *http.Request) {
 		if excludeSenderStr != "" {
 			if id, err := strconv.Atoi(excludeSenderStr); err == nil {
 				excludeSender = &id
-			}else{
+			} else {
 				logging.Log("[ERROR] : Invalid exclude_sender parameter: %s", excludeSenderStr)
 			}
 		}

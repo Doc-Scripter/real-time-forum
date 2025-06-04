@@ -2,35 +2,22 @@
 let isLoginMode = true;
 
 // Input sanitization function
-function sanitizeInput(input) {
-  if (typeof input !== "string") return "";
-
-  // Remove HTML tags and dangerous characters
-  return input
-    .replace(/[<>]/g, "") // Remove < and >
-    .replace(/[&]/g, "") // Remove &
-    .replace(/['"]/g, "") // Remove quotes
-    .replace(/javascript:/gi, "") // Remove javascript: protocol
-    .replace(/on\w+=/gi, "") // Remove event handlers like onclick=
-    .replace(/\0/g, "") // Remove null bytes
-    .trim();
-}
 
 // Strict alphanumeric validation for nicknames
 function validateNickname(nickname) {
   // Only allow letters, numbers, and underscores
-  const nicknameRegex = /^[a-zA-Z0-9_]+$/;
+  const nicknameRegex = /^[0-9a-zA-Z_<>!@#$%^&*()`~]+$/;
   return (
     nicknameRegex.test(nickname) &&
     nickname.length >= 3 &&
-    nickname.length <= 20
+    nickname.length <= 32
   );
 }
 
 // Name validation (only letters and spaces)
 function validateName(name) {
-  const nameRegex = /^[a-zA-Z\s]+$/;
-  return nameRegex.test(name) && name.length >= 2 && name.length <= 50;
+  const nameRegex = /^[a-zA-Z_<>!@#$%^&*()`~]+$/;
+  return nameRegex.test(name) && name.length >= 3 && name.length <= 32;
 }
 
 // Enhanced email validation
@@ -47,19 +34,17 @@ function setupInputSanitization() {
       sanitize: true,
       validate: validateNickname,
       errorMsg:
-        "Nickname can only contain letters, numbers, and underscores (3-20 characters)",
+        "Nickname can only contain letters, numbers, and underscores (2 - 32 characters)",
     },
     firstName: {
       sanitize: true,
       validate: validateName,
-      errorMsg:
-        "First name can only contain letters and spaces (2-50 characters)",
+      errorMsg: "First name can only contain letters (3- 32 characters)",
     },
     lastName: {
       sanitize: true,
       validate: validateName,
-      errorMsg:
-        "Last name can only contain letters and spaces (2-50 characters)",
+      errorMsg: "Last name can only contain letters (3-32 characters)",
     },
     email: {
       sanitize: true,
@@ -91,46 +76,6 @@ function setupInputSanitization() {
         input.parentNode.appendChild(errorElement);
       }
 
-      // Real-time sanitization and validation
-      input.addEventListener("input", function (e) {
-        let value = e.target.value;
-
-        if (config.sanitize) {
-          // Store cursor position
-          const cursorPos = e.target.selectionStart;
-          const originalLength = value.length;
-
-          // Sanitize the input
-          const sanitized = sanitizeInput(value);
-
-          // Update the input value if sanitization changed it
-          if (value !== sanitized) {
-            e.target.value = sanitized;
-            value = sanitized;
-
-            // Restore cursor position, adjusting for removed characters
-            const lengthDiff = originalLength - sanitized.length;
-            const newCursorPos = Math.max(0, cursorPos - lengthDiff);
-            e.target.setSelectionRange(newCursorPos, newCursorPos);
-          }
-        }
-
-        // Show validation feedback only if user has typed something
-        if (value.length > 0) {
-          if (!config.validate(value)) {
-            showFieldError(inputId, config.errorMsg);
-            e.target.classList.add("error");
-          } else {
-            hideFieldError(inputId);
-            e.target.classList.remove("error");
-            e.target.classList.add("valid");
-          }
-        } else {
-          hideFieldError(inputId);
-          e.target.classList.remove("error", "valid");
-        }
-      });
-
       // Clear validation styling on focus
       input.addEventListener("focus", function (e) {
         hideFieldError(inputId);
@@ -151,7 +96,7 @@ function setupInputSanitization() {
           if (config.sanitize) {
             const cursorPos = e.target.selectionStart;
             const originalLength = e.target.value.length;
-            const sanitized = sanitizeInput(e.target.value);
+            const sanitized = e.target.value;
 
             if (e.target.value !== sanitized) {
               e.target.value = sanitized;
@@ -168,31 +113,15 @@ function setupInputSanitization() {
     }
   });
 
-  // Special handling for age input (numbers only)
-  const ageInput = document.getElementById("age");
-  if (ageInput) {
-    ageInput.addEventListener("input", function (e) {
-      // Only allow numbers
-      const sanitized = e.target.value.replace(/[^0-9]/g, "");
-      e.target.value = sanitized;
+  
 
-      // Validate age range
-      if (sanitized.length > 0) {
-        const age = parseInt(sanitized);
-        if (age < 13 || age > 200) {
-          showFieldError("age", "Age must be between 13 and 200 years");
-          e.target.classList.add("error");
-        } else {
-          hideFieldError("age");
-          e.target.classList.remove("error");
-          e.target.classList.add("valid");
-        }
-      } else {
-        hideFieldError("age");
-        e.target.classList.remove("error", "valid");
-      }
-    });
-  }
+    
+
+}
+
+function sanitizeInput(input) {
+  const sanitized = input.replace(/[<>!@#$%^&*()`~]/g, "");
+  return sanitized;
 }
 
 // Helper functions for field-specific error messages
@@ -236,9 +165,8 @@ function validateForm() {
 
   if (isLoginMode) {
     // Login validation
-    const loginIdentifier = sanitizeInput(
-      document.getElementById("loginIdentifier").value
-    );
+    const loginIdentifier = document.getElementById("loginIdentifier").value;
+
     const password = document.getElementById("password").value;
 
     if (!loginIdentifier) {
@@ -266,34 +194,30 @@ function validateForm() {
     // Registration validation
     const fields = {
       nickname: {
-        value: sanitizeInput(document.getElementById("nickname").value),
+        value: document.getElementById("nickname").value,
         validator: validateNickname,
         message:
           "Nickname can only contain letters, numbers, and underscores (3-20 characters)",
       },
       firstName: {
-        value: sanitizeInput(document.getElementById("firstName").value),
+        value: document.getElementById("firstName").value,
         validator: validateName,
-        message:
-          "First name can only contain letters and spaces (2-50 characters)",
+        message: "First name can only contain letters (2-32 characters)",
       },
       lastName: {
-        value: sanitizeInput(document.getElementById("lastName").value),
+        value: document.getElementById("lastName").value,
         validator: validateName,
         message:
           "Last name can only contain letters and spaces (2-50 characters)",
       },
       email: {
-        value: sanitizeInput(document.getElementById("email").value),
+        value: document.getElementById("email").value,
         validator: validateEmail,
         message: "Please enter a valid email address",
       },
       age: {
-        value: document.getElementById("age").value,
-        validator: (age) => {
-          const num = parseInt(age);
-          return !isNaN(num) && num >= 13 && num <= 200;
-        },
+        value: parseInt(document.getElementById("age").value),
+        validator: validateAge,
         message: "Age must be between 13 and 200 years",
       },
       gender: {
@@ -315,7 +239,10 @@ function validateForm() {
       const field = fields[fieldId];
       const inputElement = document.getElementById(fieldId);
 
-      if (!field.value || field.value.trim() === "") {
+      const fieldValue = typeof field.value === 'string' ? field.value.trim() : field.value;
+
+
+      if (!fieldValue || fieldValue === "") {
         showFieldError(
           fieldId,
           `Please enter ${
@@ -370,7 +297,14 @@ function validatePassword(password) {
   return true;
 }
 
-let Initialized=false;
+function validateAge(age){
+  if (isNaN(age)||age < 13 || age > 200) {
+    return false
+  } 
+  return true
+}
+
+let Initialized = false;
 // Authentication check function
 async function checkAuth() {
   try {
@@ -380,19 +314,18 @@ async function checkAuth() {
     const userFilters = document.getElementById("userFilters");
 
     if (data.authenticated) {
-        if (!Initialized){
-            Initialized=true
-            fetchAndDisplayOnlineUsers();
-            setInterval(fetchAndDisplayOnlineUsers, 5000);
-            resetPosts();
-            setupInfiniteScroll();
-            loadFilterCategories();
-            await initInbox();
-            startUnreadCheck();
-
-        }
+      if (!Initialized) {
+        Initialized = true;
+        fetchAndDisplayOnlineUsers();
+        setInterval(fetchAndDisplayOnlineUsers, 5000);
+        resetPosts();
+        setupInfiniteScroll();
+        loadFilterCategories();
+        await initInbox();
+        startUnreadCheck();
+      }
       // Sanitize the nickname before displaying
-      const sanitizedNickname = sanitizeInput(data.nickname || "User");
+      const sanitizedNickname = data.nickname || "User";
       authButtons.innerHTML = `
                 <div class="auth-status">
                     <span class="welcome-text">Welcome, ${sanitizedNickname}</span>
@@ -444,9 +377,8 @@ async function handleAuth(event) {
   let requestBody;
 
   if (isLoginMode) {
-    const loginIdentifier = sanitizeInput(
-      document.getElementById("loginIdentifier").value
-    );
+    const loginIdentifier = document.getElementById("loginIdentifier").value;
+
     requestBody = {
       loginIdentifier,
       password,
@@ -457,10 +389,10 @@ async function handleAuth(event) {
       nickname: sanitizeInput(document.getElementById("nickname").value),
       firstName: sanitizeInput(document.getElementById("firstName").value),
       lastName: sanitizeInput(document.getElementById("lastName").value),
-      email: sanitizeInput(document.getElementById("email").value),
+      email: document.getElementById("email").value,
       age: parseInt(document.getElementById("age").value),
       gender: sanitizeInput(document.getElementById("gender").value),
-      password, // Don't sanitize password as it needs special characters
+      password,
     };
   }
 
@@ -490,7 +422,7 @@ async function handleAuth(event) {
         }, 1000);
       }
     } else {
-      const errorMessage = sanitizeInput(data.message || "An error occurred");
+      const errorMessage = data.message || "An error occurred";
       showAuthError(errorMessage);
     }
   } catch (error) {
@@ -505,17 +437,16 @@ document.addEventListener("DOMContentLoaded", function () {
   setupInputSanitization();
 });
 
-// Rest of the functions remain the same...
 function showAuthError(message) {
   const messageDiv = document.getElementById("authMessage");
-  messageDiv.textContent = sanitizeInput(message);
+  messageDiv.textContent = message;
   messageDiv.style.display = "block";
   messageDiv.className = "auth-message error";
 }
 
 function showAuthSuccess(message) {
   const messageDiv = document.getElementById("authMessage");
-  messageDiv.textContent = sanitizeInput(message);
+  messageDiv.textContent = message;
   messageDiv.style.display = "block";
   messageDiv.className = "auth-message success";
 }

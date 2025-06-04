@@ -26,7 +26,7 @@ func InitializeLogger() {
 
 	fileLogger := log.New(logFile, "", log.LstdFlags)
 	terminalLogger = log.New(os.Stdout, "", log.LstdFlags)
-	
+
 	logger = fileLogger
 	terminalLogger.Println("Logger initialized successfully")
 }

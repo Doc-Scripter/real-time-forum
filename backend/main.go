@@ -36,7 +36,7 @@ func main() {
 	mux.HandleFunc("/api/login", handlers.LoginHandler)
 	mux.HandleFunc("/api/register", handlers.RegisterHandler)
 	mux.HandleFunc("/", handlers.Index)
-	
+
 	// Create protected mux
 	protectedMux := http.NewServeMux()
 	// protectedMux.HandleFunc("/api/posts", handlers.GetPostsHandler)

@@ -13,9 +13,9 @@ import (
 
 // UserStatus represents the current status of a user in the forum
 type UserStatus struct {
-	Receiver         int       `json:"receiver"`
-	Nickname         string    `json:"nickname"`
-	Online           bool      `json:"online"`
+	Receiver         int        `json:"receiver"`
+	Nickname         string     `json:"nickname"`
+	Online           bool       `json:"online"`
 	LastConversation *time.Time `json:"last_conversation,omitempty"`
 }
 
@@ -81,7 +81,7 @@ func GetForumStatusHandler(w http.ResponseWriter, r *http.Request) {
 		if lastConversationStr.Valid && lastConversationStr.String != "" {
 			if parsedTime, err := time.Parse("2006-01-02 15:04:05", lastConversationStr.String); err == nil {
 				user.LastConversation = &parsedTime
-			}else{
+			} else {
 				logging.Log("[ERROR] : fetching user status: %v", err)
 			}
 		}
