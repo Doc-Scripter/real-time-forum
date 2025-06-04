@@ -29,3 +29,6 @@ git:
 	git remote add github https://github.com/Doc-Scripter/real-time-forum.git
 	git remote add gitea https://learn.zone01kisumu.ke/git/cliffootieno/real-time-forum
 	@echo "Remotes have been updated."
+pull:
+	git fetch github
+	git pull --all
