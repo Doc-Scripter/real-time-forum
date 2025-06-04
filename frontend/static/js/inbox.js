@@ -535,8 +535,8 @@ function loadMoreMessages(receiverId) {
 function sanitizeHTML(str) {
   if (typeof str !== 'string') return '';
   const temp = document.createElement('div');
-  temp.textContent = str; // Assigning to textContent automatically escapes HTML
-  return temp.innerHTML;  // Retrieve the escaped HTML string
+  temp.textContent = str; 
+  return temp.innerHTML;  
 }
 // Initialize WebSocket connection
 function initWebSocket() {
@@ -544,7 +544,7 @@ function initWebSocket() {
     ("WebSocket already connected or connecting.");
     return; 
   }
-  ws = new WebSocket("api/protected/api/messaging"); // Adjust URL as needed
+  ws = new WebSocket("api/protected/api/messaging"); 
 
   ws.onopen = () => {
     ("WebSocket connected");
@@ -594,7 +594,7 @@ function initWebSocket() {
 
   ws.onclose = () => {
     ("WebSocket disconnected, retrying...");
-    setTimeout(initWebSocket, 2000); // Reconnect
+    setTimeout(initWebSocket, 2000); 
   };
 }
 
