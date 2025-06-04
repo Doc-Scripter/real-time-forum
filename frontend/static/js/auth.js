@@ -239,7 +239,10 @@ function validateForm() {
       const field = fields[fieldId];
       const inputElement = document.getElementById(fieldId);
 
-      if (!field.value || field.value.trim() === "") {
+      const fieldValue = typeof field.value === 'string' ? field.value.trim() : field.value;
+
+
+      if (!fieldValue || fieldValue === "") {
         showFieldError(
           fieldId,
           `Please enter ${
