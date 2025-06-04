@@ -389,7 +389,7 @@ async function handleAuth(event) {
       nickname: sanitizeInput(document.getElementById("nickname").value),
       firstName: sanitizeInput(document.getElementById("firstName").value),
       lastName: sanitizeInput(document.getElementById("lastName").value),
-      email: sanitizeInput(document.getElementById("email").value),
+      email: document.getElementById("email").value,
       age: parseInt(document.getElementById("age").value),
       gender: sanitizeInput(document.getElementById("gender").value),
       password,
