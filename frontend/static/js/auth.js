@@ -411,9 +411,9 @@ async function handleAuth(event) {
       if (isLoginMode) {
         showAuthSuccess("Login successful");
         startAuthStatusCheck();
-        // setTimeout(() => {
-        //   window.location.reload();
-        // }, 1000);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         showAuthSuccess("Registration successful! Please login.");
         setTimeout(() => {

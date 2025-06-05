@@ -5,61 +5,12 @@ let currentCategory = '';
 let currentFilter = '';
 let fetchPostURL = 'api/protected/api/posts';
 
-// HTML sanitization function
+// HTML sanitization function - simplified
 function sanitizeHTML(str) {
-    if (!str) return '';
-    return str.replace(/[<>&"']/g, function(match) {
-        const escapeMap = {
-            '<': '&lt;',
-            '>': '&gt;',
-            '&': '&amp;',
-            '"': '&quot;',
-            "'": '&#x27;'
-        };
-        return escapeMap[match];
-    });
-}
-
-// Function to strip HTML tags and decode entities for input validation
-function stripAndValidateHTML(str) {
-    if (!str) return '';
-    // Remove any HTML tags and decode common entities
-    return str.replace(/<[^>]*>/g, '')
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
-              .replace(/&amp;/g, '&')
-              .replace(/&quot;/g, '"')
-              .replace(/&#x27;/g, "'");
-}
-
-// Real-time input sanitization for post title
-function sanitizePostTitle(input) {
-    const originalValue = input.value;
-    const sanitizedValue = stripAndValidateHTML(originalValue);
-    
-    if (originalValue !== sanitizedValue) {
-        input.value = sanitizedValue;
-        showPostError('HTML tags and special characters are not allowed in the title');
-        setTimeout(() => {
-            const errorDiv = document.getElementById('post-error-message');
-            if (errorDiv) errorDiv.style.display = 'none';
-        }, 3000);
-    }
-}
-
-// Real-time input sanitization for post content
-function sanitizePostContent(input) {
-    const originalValue = input.value;
-    const sanitizedValue = stripAndValidateHTML(originalValue);
-    
-    if (originalValue !== sanitizedValue) {
-        input.value = sanitizedValue;
-        showPostError('HTML tags and special characters are not allowed in the content');
-        setTimeout(() => {
-            const errorDiv = document.getElementById('post-error-message');
-            if (errorDiv) errorDiv.style.display = 'none';
-        }, 3000);
-    }
+    if (typeof str !== 'string') return '';
+    const temp = document.createElement('div');
+    temp.textContent = str; // This automatically escapes HTML
+    return temp.innerHTML;
 }
 
 async function loadFilterCategories() {
@@ -153,23 +104,23 @@ async function openCreatePostModal() {
         document.getElementById('createPostModal').classList.add('active');
         loadPostCategories();
         
-        // Add event listeners for real-time sanitization
-        const titleInput = document.getElementById('postTitle');
-        const contentInput = document.getElementById('postContent');
+        // Remove event listeners for real-time sanitization
+        // const titleInput = document.getElementById('postTitle');
+        // const contentInput = document.getElementById('postContent');
         
-        if (titleInput) {
-            titleInput.addEventListener('input', (e) => sanitizePostTitle(e.target));
-            titleInput.addEventListener('paste', (e) => {
-                setTimeout(() => sanitizePostTitle(e.target), 10);
-            });
-        }
+        // if (titleInput) {
+        //     titleInput.addEventListener('input', (e) => sanitizePostTitle(e.target));
+        //     titleInput.addEventListener('paste', (e) => {
+        //         setTimeout(() => sanitizePostTitle(e.target), 10);
+        //     });
+        // }
         
-        if (contentInput) {
-            contentInput.addEventListener('input', (e) => sanitizePostContent(e.target));
-            contentInput.addEventListener('paste', (e) => {
-                setTimeout(() => sanitizePostContent(e.target), 10);
-            });
-        }
+        // if (contentInput) {
+        //     contentInput.addEventListener('input', (e) => sanitizePostContent(e.target));
+        //     contentInput.addEventListener('paste', (e) => {
+        //         setTimeout(() => sanitizePostContent(e.target), 10);
+        //     });
+        // }
     } catch (error) {
         console.error('Error checking auth status:', error);
         handleError('Please login to create a post');
@@ -316,20 +267,16 @@ function validatePostForm() {
     const contentInput = document.getElementById('postContent');
     const title = titleInput.value.trim();
     const content = contentInput.value.trim();
-    const errorDiv = document.getElementById('post-error-message');
-    
-    // Check for HTML tags or suspicious characters
-    const htmlPattern = /<[^>]*>|&[a-zA-Z0-9]+;/;
     
     if (!title) {
         showPostError('Please enter a post title');
         return false;
     }
     
-    if (htmlPattern.test(title)) {
-        showPostError('HTML tags and special characters are not allowed in the title');
-        // Clean the input
-        titleInput.value = stripAndValidateHTML(title);
+    // Check title length
+    if (title.length > 32) {
+        showPostError('Title must be 32 characters or less');
+        titleInput.value = title.substring(0, 32);
         return false;
     }
     
@@ -338,14 +285,6 @@ function validatePostForm() {
         return false;
     }
     
-    if (htmlPattern.test(content)) {
-        showPostError('HTML tags and special characters are not allowed in the content');
-        // Clean the input
-        contentInput.value = stripAndValidateHTML(content);
-        return false;
-    }
-    
-    errorDiv.style.display = 'none';
     return true;
 }
 
@@ -370,8 +309,8 @@ async function handleCreatePost(event) {
     }
 
     // Get and sanitize the values
-    const title = stripAndValidateHTML(document.getElementById('postTitle').value.trim());
-    const content = stripAndValidateHTML(document.getElementById('postContent').value.trim());
+    const title = sanitizeHTML(document.getElementById('postTitle').value.trim()).substring(0, 32);
+    const content = sanitizeHTML(document.getElementById('postContent').value.trim());
     const selectedCategories = Array.from(document.querySelectorAll('#postCategories input:checked')).map(input => parseInt(input.value));
 
     try {
@@ -516,8 +455,8 @@ async function submitComment(postId) {
         return;
     }
 
-    // Sanitize comment content
-    const sanitizedContent = stripAndValidateHTML(content);
+    // Use sanitizeHTML instead of stripAndValidateHTML
+    const sanitizedContent = sanitizeHTML(content);
     if (content !== sanitizedContent) {
         handleError('HTML tags and special characters are not allowed in comments');
         textarea.value = sanitizedContent;
@@ -562,22 +501,32 @@ async function submitComment(postId) {
 
 async function updatePost(postId) {
     try {
-        const response = await fetch(`api/protected/api/posts/${postId}`);
+        const response = await fetch(`/api/protected/api/posts/${postId}`);
         if (!response.ok) {
             throw new Error('Failed to fetch updated post');
         }
+        
         const updatedPost = await response.json();
         
         // Find and update the specific post in the DOM
         const existingPost = document.querySelector(`.post[data-post-id="${postId}"]`);
         if (existingPost) {
             const newPost = createPostElement(updatedPost);
+            
             // Preserve the comments display state
             const oldCommentsContainer = existingPost.querySelector('.comments-container');
             const newCommentsContainer = newPost.querySelector('.comments-container');
+            
             if (oldCommentsContainer && oldCommentsContainer.style.display === 'block') {
                 newCommentsContainer.style.display = 'block';
             }
+            
+            // Update the comment count in the button
+            const commentBtn = newPost.querySelector('.comment-btn');
+            if (commentBtn) {
+                commentBtn.innerHTML = `💬 Comments (${(updatedPost.comments || []).length})`;
+            }
+            
             existingPost.replaceWith(newPost);
         }
     } catch (error) {

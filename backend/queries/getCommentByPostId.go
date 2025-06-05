@@ -9,7 +9,7 @@ import (
 func GetCommentsByPostID(postID int) ([]models.Comment, error) {
 	query := `
 		SELECT 
-			c.id, c.user_id, u.username, c.content, c.created_at,
+			c.id, c.user_id, u.nickname as username, c.content, c.created_at,
 			(SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id AND is_like = 1) as likes,
 			(SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id AND is_like = 0) as dislikes
 		FROM comments c
@@ -38,6 +38,7 @@ func GetCommentsByPostID(postID int) ([]models.Comment, error) {
 		if err != nil {
 			return nil, err
 		}
+		comment.PostID = postID // Set the post ID
 		comments = append(comments, comment)
 	}
 

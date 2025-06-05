@@ -66,7 +66,7 @@ async function submitComment(postId) {
             },
             body: JSON.stringify({
                 post_id: postId,
-                content: content
+                content: sanitizeHTML(content)
             })
         });
 
