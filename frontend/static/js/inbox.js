@@ -162,38 +162,42 @@ function getConversations() {
     return [];
   }
 
-  ("DEBUG - Last Messages:", lastMessages);
-  ("DEBUG - Current User:", currentUser);
-
-  return lastMessages.map((msg) => {
-    ("DEBUG - Processing message:", msg);
-
-    // Log values before deciding partner
-    ("DEBUG - Sender:", msg.sender);
-    ("DEBUG - Receiver:", msg.receiver);
-    let receiverName = msg.receiver;
+  // Create a map to store the latest message for each unique partner
+  const conversationMap = new Map();
+  
+  // Process all messages to find the latest one for each partner
+  lastMessages.forEach((msg) => {
+    const isCurrentUserSender = msg.sender === currentUser;
+    const partner = isCurrentUserSender ? msg.receiver : msg.sender;
+    const partnerId = isCurrentUserSender ? msg.receiver : msg.sender_id;
+    
+    // Get partner's display name
+    let partnerName = partner;
     const onlineUsers = document.querySelectorAll(".online-user");
     onlineUsers.forEach((user) => {
-      if (user.dataset.receiverId == msg.receiver) {
-        receiverName = user.querySelector(".receiver").textContent;
+      if (user.dataset.receiverId == partnerId) {
+        partnerName = user.querySelector(".receiver").textContent;
       }
     });
-
-    const isCurrentUserSender = msg.sender === currentUser;
-    const partner = isCurrentUserSender ? receiverName : msg.sender;
-
-    ("DEBUG - Determined partner:", partner);
-
-    return {
-      partner: partner,
-      lastMsg: {
-        data: msg.data || "",
-        time: msg.time || "",
-        receiver: receiverName, // Changed from msg.sender to msg.receiver
-        receiverId: msg.receiver,
-      },
-    };
+    
+    // Check if we already have a message for this partner
+    if (!conversationMap.has(partner) || 
+        new Date(msg.time) > new Date(conversationMap.get(partner).lastMsg.time)) {
+      // Store this message as it's either the first one or newer than what we have
+      conversationMap.set(partner, {
+        partner: partnerName,
+        lastMsg: {
+          data: msg.data || "",
+          time: msg.time || "",
+          receiver: msg.receiver,
+          receiverId: isCurrentUserSender ? msg.receiver : msg.sender_id,
+        },
+      });
+    }
   });
+  
+  // Convert the map values to an array
+  return Array.from(conversationMap.values());
 }
 // Render inbox: conversation list or chat view
 async function renderInbox() {
@@ -436,7 +440,7 @@ async function renderChat(partner, receiverId) {
       sender: currentUser,
       receiver: receiverId,
       data: sanitizedText,
-      time: new Date().toLocaleTimeString(),
+      time: new Date().toLocaleTimeString()
     });
 
     // Also store via REST API
@@ -458,10 +462,6 @@ async function renderChat(partner, receiverId) {
       if (response.ok) {
         // Add the sent message to the local messages array
         messages.push(newMessage);
-
-        // Re-render the chat to show the new message
-        // renderChat(partner, receiverId);
-
         appendNewMessage(newMessage)
       } else {
         console.error("Failed to save message");
