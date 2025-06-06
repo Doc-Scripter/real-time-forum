@@ -1,7 +1,6 @@
-// Enhanced input validation and sanitization functions
+
 let isLoginMode = true;
 
-// Input sanitization function
 
 // Strict alphanumeric validation for nicknames
 function validateNickname(nickname) {
@@ -113,10 +112,13 @@ function setupInputSanitization() {
     }
   });
 
-  
-
-    
-
+  // Add real-time password validation
+  const passwordInput = document.getElementById("password");
+  if (passwordInput) {
+    passwordInput.addEventListener("input", function(e) {
+      checkPasswordStrength(e.target.value);
+    });
+  }
 }
 
 function sanitizeInput(input) {
@@ -575,6 +577,7 @@ function checkPasswordStrength(password) {
 
   let strength = 0;
 
+  // Check length requirement
   if (password.length >= 8) {
     strength += 25;
     if (lengthCheck) lengthCheck.classList.add("valid");
@@ -582,6 +585,7 @@ function checkPasswordStrength(password) {
     if (lengthCheck) lengthCheck.classList.remove("valid");
   }
 
+  // Check number requirement
   if (/\d/.test(password)) {
     strength += 25;
     if (numberCheck) numberCheck.classList.add("valid");
@@ -589,6 +593,7 @@ function checkPasswordStrength(password) {
     if (numberCheck) numberCheck.classList.remove("valid");
   }
 
+  // Check special character requirement
   if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
     strength += 25;
     if (specialCheck) specialCheck.classList.add("valid");
@@ -596,6 +601,7 @@ function checkPasswordStrength(password) {
     if (specialCheck) specialCheck.classList.remove("valid");
   }
 
+  // Check uppercase requirement
   if (/[A-Z]/.test(password)) {
     strength += 25;
     if (uppercaseCheck) uppercaseCheck.classList.add("valid");
@@ -603,6 +609,7 @@ function checkPasswordStrength(password) {
     if (uppercaseCheck) uppercaseCheck.classList.remove("valid");
   }
 
+  // Update strength meter
   strengthMeter.style.width = `${strength}%`;
 
   if (strength <= 25) {

@@ -31,10 +31,10 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// **Escape the comment content to neutralize scripts**
+	// Escape the comment content to neutralize scripts
 	comment.Content = html.EscapeString(comment.Content)
 
-	// **Reject comments that are empty after escaping**
+	// Reject comments that are empty after escaping
 	if comment.Content == "" {
 		utils.ErrorMessage(w, "Comment cannot be empty", http.StatusBadRequest)
 		return
@@ -46,8 +46,17 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Return the updated post with comments
+	post, err := queries.GetPostByID(comment.PostID)
+	if err != nil {
+		// If we can't get the updated post, still return success for the comment
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Comment created successfully"})
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Comment created successfully"})
+	json.NewEncoder(w).Encode(post)
 }
 
 func CreateCommentLikeHandler(w http.ResponseWriter, r *http.Request) {
